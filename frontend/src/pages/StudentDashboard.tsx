@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -127,22 +128,42 @@ function DashboardHome() {
           )}
         </div>
       </div>
-      <div className="glass-card p-5">
-        <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2"><Bell className="w-4 h-4 text-primary" />AI Study Reminders</h3>
-        <div className="space-y-2">
+      <div className="glass-card p-6 border-primary/10 overflow-hidden relative group">
+        <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -mr-12 -mt-12 blur-2xl group-hover:bg-primary/10 transition-all duration-700" />
+        <div className="flex justify-between items-center mb-5 relative z-10">
+          <h3 className="font-bold text-foreground flex items-center gap-2.5 italic">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Brain className="w-4 h-4 text-primary" />
+            </div>
+            AI Insight: Study Nodes
+          </h3>
+          <Button variant="ghost" size="sm" className="h-7 text-[10px] uppercase font-black tracking-widest text-primary hover:bg-primary/5" onClick={() => navigate("/student/reminders")}>
+            Full Schedule
+          </Button>
+        </div>
+        <div className="space-y-3 relative z-10">
           {reminders.length > 0 ? (
             reminders.slice(0, 2).map((r) => (
-              <div key={r._id} className="flex items-center justify-between p-3 bg-secondary/30 rounded-xl">
-                <div>
-                  <p className="text-sm font-medium text-foreground">{r.message}</p>
-                  <p className="text-xs text-muted-foreground">{new Date(r.reminderTime).toLocaleString()}</p>
+              <div key={r._id} className="group/item flex items-center justify-between p-4 bg-secondary/20 hover:bg-secondary/40 rounded-2xl border border-border/40 transition-all duration-300">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-background/80 flex items-center justify-center text-primary shadow-sm group-hover/item:scale-110 transition-transform">
+                    <Clock className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-foreground leading-tight">{r.message}</p>
+                    <p className="text-[10px] font-medium text-muted-foreground mt-0.5">
+                      {new Date(r.reminderTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {r.courseId?.title || "AI Priority"}
+                    </p>
+                  </div>
                 </div>
-                <span className="text-xs px-2.5 py-1 rounded-full bg-primary/10 text-primary">In Progress</span>
+                <Badge className="bg-primary/10 text-primary border-none text-[8px] font-black uppercase tracking-tighter">
+                  Syncing
+                </Badge>
               </div>
             ))
           ) : (
-            <div className="text-sm text-muted-foreground p-3 bg-secondary/10 rounded-xl">
-              No upcoming reminders.
+            <div className="text-xs text-muted-foreground p-8 bg-secondary/10 rounded-2xl text-center italic border border-dashed border-border/60">
+              Your AI timeline is currently clear.
             </div>
           )}
         </div>
@@ -339,36 +360,79 @@ function RemindersPage() {
         </Dialog>
       </div>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {reminders.length > 0 ? (
           reminders.map((r, i) => (
             <motion.div
               key={r._id}
-              className="glass-card p-5 hover:border-primary/40 transition-all border border-primary/10 group"
+              className="group relative glass-card p-6 overflow-hidden border-primary/10 hover:border-primary/40 transition-all duration-500"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
             >
-              <div className="flex justify-between items-start mb-3">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center animate-pulse-soft">
-                  <Bell className="w-5 h-5 text-primary" />
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-primary/10 transition-colors" />
+
+              <div className="relative z-10 space-y-4">
+                <div className="flex justify-between items-start">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center border border-white/10 shadow-inner group-hover:scale-110 transition-transform duration-500">
+                    <Brain className="w-6 h-6 text-primary" />
+                  </div>
+                  <Badge variant="outline" className="bg-primary/5 text-[10px] border-primary/20 text-primary font-bold tracking-wider uppercase">
+                    AI Scheduled
+                  </Badge>
                 </div>
-                <div className="text-[10px] px-2 py-0.5 rounded-full bg-primary/20 text-primary font-bold">
-                  {r.courseId?.title}
+
+                <div>
+                  <div className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-1">
+                    {r.courseId?.title || "General Study"}
+                  </div>
+                  <h3 className="text-lg font-bold text-foreground leading-tight group-hover:text-primary transition-colors">
+                    {r.message}
+                  </h3>
                 </div>
-              </div>
-              <h3 className="font-bold text-foreground mb-1 group-hover:text-primary transition-colors">{r.message}</h3>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Calendar className="w-3 h-3" />
-                {new Date(r.reminderTime).toLocaleString()}
+
+                <div className="flex items-center gap-3 p-3 bg-secondary/20 rounded-xl border border-border/40">
+                  <div className="w-8 h-8 rounded-lg bg-background/50 flex items-center justify-center text-primary shadow-sm">
+                    <Clock className="w-4 h-4" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-[9px] font-bold text-muted-foreground uppercase leading-none mb-1">Reminder Time</p>
+                    <p className="text-xs font-semibold text-foreground">
+                      {new Date(r.reminderTime).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="pt-2 flex items-center justify-between">
+                  <div className="flex -space-x-1.5">
+                    {[1, 2].map(x => (
+                      <div key={x} className="w-5 h-5 rounded-full border-2 border-background bg-secondary shadow-sm" />
+                    ))}
+                    <div className="w-5 h-5 rounded-full border-2 border-background bg-primary/10 flex items-center justify-center text-[8px] font-bold text-primary italic">+AI</div>
+                  </div>
+                  <Button variant="ghost" size="sm" className="h-8 text-[10px] font-bold uppercase tracking-widest hover:text-primary hover:bg-primary/5">
+                    Modify <ChevronRight className="w-3 h-3 ml-1" />
+                  </Button>
+                </div>
               </div>
             </motion.div>
           ))
         ) : (
-          <div className="col-span-full glass-card p-12 text-center text-muted-foreground bg-gradient-to-b from-transparent to-primary/5">
-            <Brain className="w-12 h-12 mx-auto mb-3 opacity-20" />
-            <p className="italic">No study reminders set yet. Let the AI help you stay on track!</p>
-            <Button variant="link" className="mt-2 text-primary">Schedule your first session</Button>
+          <div className="col-span-full py-20 text-center">
+            <div className="relative inline-block mb-6">
+              <div className="absolute inset-0 bg-primary/20 blur-[100px] rounded-full" />
+              <div className="relative w-24 h-24 rounded-3xl bg-gradient-to-br from-secondary to-background border border-border/40 flex items-center justify-center shadow-2xl">
+                <Brain className="w-12 h-12 text-muted-foreground opacity-20" />
+              </div>
+              <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-2xl gradient-primary flex items-center justify-center shadow-lg transform rotate-12">
+                <PlusCircle className="w-6 h-6 text-white" />
+              </div>
+            </div>
+            <h3 className="text-xl font-bold text-foreground mb-2">No active study nodes found</h3>
+            <p className="text-sm text-muted-foreground max-w-sm mx-auto italic">
+              "Efficiency is doing things right; effectiveness is doing the right things." Let AI help you schedule your next deep work session.
+            </p>
+            <Button variant="link" className="mt-4 text-primary font-bold uppercase tracking-widest text-[10px]">Initialize First Node</Button>
           </div>
         )}
       </div>
