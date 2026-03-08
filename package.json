@@ -1,0 +1,14 @@
+{
+    "name": "study-sync-root",
+    "version": "1.0.0",
+    "private": true,
+    "scripts": {
+        "build": "npm run build --workspace=vite_react_shadcn_ts",
+        "dev": "npm run dev --workspace=vite_react_shadcn_ts",
+        "install:all": "npm install"
+    },
+    "workspaces": [
+        "frontend",
+        "backend"
+    ]
+}

@@ -1,0 +1,10 @@
+{
+    "buildCommand": "npm run build --workspace=vite_react_shadcn_ts",
+    "outputDirectory": "frontend/dist",
+    "rewrites": [
+        {
+            "source": "/(.*)",
+            "destination": "/index.html"
+        }
+    ]
+}
