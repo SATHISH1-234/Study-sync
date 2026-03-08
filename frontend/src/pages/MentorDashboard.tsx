@@ -203,6 +203,7 @@ function GroupsPage() {
 function StudentsPage() {
   const { user } = useAuth();
   const [students, setStudents] = useState<any[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -213,7 +214,7 @@ function StudentsPage() {
           res.data.data?.forEach((g: any) => {
             g.students?.forEach((s: any) => {
               if (s && typeof s === 'object' && !allStudents.find(x => x._id === s._id)) {
-                allStudents.push({ ...s, course: g.courseId?.title || "Course" });
+                allStudents.push({ ...s, course: g.courseId?.title || "Course", groupId: g._id, groupName: g.groupName });
               }
             });
           });
@@ -223,35 +224,84 @@ function StudentsPage() {
     }
   }, [user?._id]);
 
+  const filteredStudents = students.filter(s =>
+    s.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    s.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    s.course?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   if (loading) return <div className="h-[60vh] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-foreground">My Students</h2>
-      {students && students.length > 0 ? (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {students.map((s, i) => (
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <h2 className="text-2xl font-bold text-foreground">My Students</h2>
+        <div className="relative w-full md:w-64">
+          <Input
+            placeholder="Search students..."
+            className="pl-10 h-10 bg-secondary/20 border-border/40"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <Users className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+        </div>
+      </div>
+
+      {filteredStudents.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredStudents.map((s, i) => (
             <motion.div
               key={s._id}
-              className="glass-card p-5"
+              className="group relative glass-card p-6 overflow-hidden border-primary/10 hover:border-primary/40 transition-all duration-500"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.08 }}
+              transition={{ delay: i * 0.05 }}
             >
-              <div className="w-10 h-10 rounded-full gradient-primary flex items-center justify-center mb-3 text-primary-foreground font-bold">
-                {s.name ? s.name[0] : "?"}
-              </div>
-              <h3 className="font-semibold text-foreground text-sm">{s.name}</h3>
-              <p className="text-xs text-muted-foreground mb-3">{s.email}</p>
-              <div className="flex justify-between text-xs mb-1">
-                <span className="text-muted-foreground">Course: {s.course}</span>
+              <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -mr-12 -mt-12 blur-3xl group-hover:bg-primary/10 transition-colors" />
+
+              <div className="relative z-10 space-y-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center border border-white/10 shadow-inner group-hover:scale-110 transition-transform duration-500">
+                    <span className="text-xl font-black text-primary italic">{s.name ? s.name[0] : "?"}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg font-bold text-foreground truncate leading-tight group-hover:text-primary transition-colors">{s.name}</h3>
+                    <p className="text-xs text-muted-foreground truncate">{s.email}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <BookOpen className="w-3.5 h-3.5 text-primary" />
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">Primary Course</span>
+                    </div>
+                    <Badge variant="outline" className="bg-primary/5 text-[9px] border-primary/20 text-primary uppercase font-bold px-1.5 h-4">
+                      {s.groupName}
+                    </Badge>
+                  </div>
+                  <p className="text-sm font-semibold text-foreground truncate border-l-2 border-primary/30 pl-3 py-0.5">
+                    {s.course}
+                  </p>
+                </div>
+
+                <div className="pt-2 flex items-center justify-between border-t border-border/40">
+                  <div className="flex items-center gap-1.5">
+                    <Badge className="bg-green-500/10 text-green-500 border-none text-[8px] font-black uppercase tracking-widest">Active Partner</Badge>
+                  </div>
+                  <Button variant="ghost" size="sm" className="h-8 text-[10px] font-bold uppercase tracking-widest hover:text-primary hover:bg-primary/5" onClick={() => window.location.href = `mailto:${s.email}`}>
+                    Email Student <LinkIcon className="w-3 h-3 ml-2" />
+                  </Button>
+                </div>
               </div>
             </motion.div>
           ))}
         </div>
       ) : (
-        <div className="glass-card p-20 text-center text-muted-foreground">
-          No students enrolled in your groups yet.
+        <div className="glass-card p-20 text-center text-muted-foreground border-dashed">
+          <GraduationCap className="w-16 h-16 mx-auto mb-4 opacity-10" />
+          <h3 className="text-xl font-bold text-foreground mb-1">No study partners found</h3>
+          <p className="text-sm">Try adjusting your search or check again later.</p>
         </div>
       )}
     </div>
@@ -311,39 +361,44 @@ function ResourcesPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-foreground">Resources</h2>
+        <h2 className="text-2xl font-bold text-foreground flex items-center gap-3">
+          <FolderOpen className="w-7 h-7 text-primary" />
+          Knowledge Repository
+        </h2>
         <Dialog>
           <DialogTrigger asChild>
-            <Button className="gradient-primary text-primary-foreground btn-glow">
-              <Plus className="w-4 h-4 mr-2" /> Share Resource
+            <Button className="gradient-primary text-primary-foreground btn-glow px-6 font-bold uppercase tracking-widest text-xs h-11">
+              <Plus className="w-4 h-4 mr-2" /> Share Node
             </Button>
           </DialogTrigger>
-          <DialogContent className="glass-card">
+          <DialogContent className="glass-card sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Share New Resource</DialogTitle>
+              <DialogTitle className="text-xl font-black italic tracking-tight">Sync New Resource</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4 py-4">
+            <div className="space-y-5 py-6">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Resource Title</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Resource Meta Title</label>
                 <Input
-                  placeholder="e.g. Week 1 Lecture Slides"
+                  className="bg-secondary/20 border-border/60 h-12"
+                  placeholder="e.g. Masterclass Lecture 01"
                   value={newResource.title}
                   onChange={(e) => setNewResource({ ...newResource, title: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">File/Link URL</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">External Data Link</label>
                 <Input
-                  placeholder="Paste URL here..."
+                  className="bg-secondary/20 border-border/60 h-12"
+                  placeholder="Paste Drive, Notion or GitHub URL..."
                   value={newResource.fileUrl}
                   onChange={(e) => setNewResource({ ...newResource, fileUrl: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Select Group</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Target Study Group</label>
                 <Select onValueChange={(val) => setNewResource({ ...newResource, groupId: val })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Which group should see this?" />
+                  <SelectTrigger className="bg-secondary/20 border-border/60 h-12">
+                    <SelectValue placeholder="Broadcast to which group?" />
                   </SelectTrigger>
                   <SelectContent>
                     {groups.map(g => (
@@ -354,8 +409,8 @@ function ResourcesPage() {
               </div>
             </div>
             <DialogFooter>
-              <Button onClick={handleAddResource} disabled={isAdding} className="w-full gradient-primary">
-                {isAdding ? "Sharing..." : "Share with Group"}
+              <Button onClick={handleAddResource} disabled={isAdding} className="w-full h-12 gradient-primary font-bold uppercase tracking-[0.2em] text-xs">
+                {isAdding ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : "Initiate Sync"}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -363,41 +418,64 @@ function ResourcesPage() {
       </div>
 
       {loading ? (
-        <div className="h-40 flex items-center justify-center"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+        <div className="h-60 flex items-center justify-center"><Loader2 className="w-10 h-10 animate-spin text-primary" /></div>
       ) : resources.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {resources.map((res) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {resources.map((res, i) => (
             <motion.div
               key={res._id}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="glass-card p-4 hover:border-primary/40 transition-all group"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05 }}
+              className="group relative glass-card p-6 border-primary/10 hover:border-primary/40 transition-all duration-500"
             >
-              <div className="flex items-start justify-between mb-3">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <FolderOpen className="w-5 h-5 text-primary" />
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-primary/10 transition-colors" />
+
+              <div className="relative z-10 space-y-4">
+                <div className="flex justify-between items-start">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center border border-white/10 shadow-inner group-hover:rotate-12 transition-transform duration-500">
+                    <FolderOpen className="w-6 h-6 text-primary" />
+                  </div>
+                  <Badge variant="outline" className="bg-primary/5 text-[9px] border-primary/20 text-primary font-black uppercase tracking-widest px-1.5 h-4">
+                    {res.groupId?.groupName || "Public Node"}
+                  </Badge>
                 </div>
-                <Badge variant="outline" className="text-[10px]">{res.groupId?.groupName}</Badge>
-              </div>
-              <h4 className="font-bold text-foreground mb-1 truncate">{res.title}</h4>
-              <p className="text-xs text-muted-foreground mb-4">Shared on {new Date(res.createdAt).toLocaleDateString()}</p>
-              <div className="flex gap-2">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="flex-1 text-xs h-8"
-                  onClick={() => window.open(res.fileUrl, '_blank')}
-                >
-                  <LinkIcon className="w-3 h-3 mr-1" /> View
-                </Button>
+
+                <div>
+                  <h4 className="text-lg font-bold text-foreground mb-1 group-hover:text-primary transition-colors truncate">{res.title}</h4>
+                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
+                    <Clock className="w-3 h-3" /> Sync Date: {new Date(res.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
+
+                <div className="pt-4 flex items-center gap-3">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="flex-1 h-9 bg-secondary/30 text-[10px] font-bold uppercase tracking-widest hover:bg-primary/5 hover:text-primary border border-border/40"
+                    onClick={() => window.open(res.fileUrl, '_blank')}
+                  >
+                    <Download className="w-3.5 h-3.5 mr-2" /> Download
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="w-9 h-9 rounded-xl border border-border/40 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-colors"
+                    onClick={() => toast.info("Delete node feature coming soon!")}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             </motion.div>
           ))}
         </div>
       ) : (
-        <div className="glass-card p-20 text-center text-muted-foreground">
-          <FolderOpen className="w-12 h-12 mx-auto mb-3 opacity-20" />
-          <p>You haven't shared any resources yet.</p>
+        <div className="glass-card p-32 text-center text-muted-foreground border-dashed bg-gradient-to-b from-transparent to-primary/5">
+          <FolderOpen className="w-20 h-20 mx-auto mb-6 opacity-10" />
+          <h3 className="text-xl font-bold text-foreground mb-2 italic">The Knowledge Node is empty</h3>
+          <p className="text-sm max-w-sm mx-auto mb-8 opacity-70">Empower your students by sharing high-quality resources, lecture notes, and study guides.</p>
+          <Button variant="link" className="text-primary font-black uppercase tracking-[0.2em] text-[10px]">Initialize First Node Sync</Button>
         </div>
       )}
     </div>
