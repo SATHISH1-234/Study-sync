@@ -115,14 +115,39 @@ function CoursesPage() {
   const { user } = useAuth();
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingCourse, setEditingCourse] = useState<any>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
 
-  useEffect(() => {
+  const fetchCourses = () => {
     if (user?._id) {
+      setLoading(true);
       api.get(`/courses/mentor/${user._id}`)
         .then(res => setCourses(res.data.data))
         .finally(() => setLoading(false));
     }
+  };
+
+  useEffect(() => {
+    fetchCourses();
   }, [user?._id]);
+
+  const handleUpdate = async () => {
+    if (!editingCourse.title || !editingCourse.description) return toast.error("Please fill all fields");
+    try {
+      setIsUpdating(true);
+      await api.put(`/courses/${editingCourse._id}`, {
+        title: editingCourse.title,
+        description: editingCourse.description
+      });
+      toast.success("Course updated successfully!");
+      setEditingCourse(null);
+      fetchCourses();
+    } catch (err) {
+      toast.error("Failed to update course");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   const navigate = useNavigate();
   return (
@@ -133,6 +158,7 @@ function CoursesPage() {
           <Plus className="w-4 h-4 mr-2" />Create New Course
         </Button>
       </div>
+
       {loading ? (
         <div className="h-40 flex items-center justify-center"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
       ) : courses && courses.length > 0 ? (
@@ -145,6 +171,7 @@ function CoursesPage() {
               modules={c.modulesCount}
               mentor="You"
               onView={() => { }}
+              onEdit={() => setEditingCourse(c)}
             />
           ))}
         </div>
@@ -154,6 +181,38 @@ function CoursesPage() {
           <p>You haven't created any courses yet.</p>
         </div>
       )}
+
+      {/* Edit Course Dialog */}
+      <Dialog open={!!editingCourse} onOpenChange={(open) => !open && setEditingCourse(null)}>
+        <DialogContent className="glass-card">
+          <DialogHeader>
+            <DialogTitle>Edit Course Details</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Course Title</label>
+              <Input
+                value={editingCourse?.title || ""}
+                onChange={(e) => setEditingCourse({ ...editingCourse, title: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Description</label>
+              <textarea
+                className="w-full min-h-[100px] p-3 rounded-xl bg-secondary/30 border border-border/40 text-sm"
+                value={editingCourse?.description || ""}
+                onChange={(e) => setEditingCourse({ ...editingCourse, description: e.target.value })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingCourse(null)}>Cancel</Button>
+            <Button className="gradient-primary" onClick={handleUpdate} disabled={isUpdating}>
+              {isUpdating ? "Updating..." : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

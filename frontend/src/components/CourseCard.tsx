@@ -9,19 +9,28 @@ interface CourseCardProps {
   mentor?: string;
   progress?: number;
   onView?: () => void;
+  onEdit?: () => void;
   actionLabel?: string;
   onAction?: () => void;
 }
 
-export default function CourseCard({ name, students, modules, mentor, progress, onView, actionLabel, onAction }: CourseCardProps) {
+export default function CourseCard({ name, students, modules, mentor, progress, onView, onEdit, actionLabel, onAction }: CourseCardProps) {
+  const { Edit2 } = require("lucide-react");
   return (
     <motion.div
       className="glass-card p-5 flex flex-col"
       whileHover={{ y: -3 }}
       transition={{ duration: 0.2 }}
     >
-      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
-        <BookOpen className="w-5 h-5 text-primary" />
+      <div className="flex justify-between items-start mb-3">
+        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+          <BookOpen className="w-5 h-5 text-primary" />
+        </div>
+        {onEdit && (
+          <Button variant="ghost" size="icon" className="w-8 h-8 h-8 rounded-lg hover:bg-primary/5 hover:text-primary transition-colors" onClick={(e) => { e.stopPropagation(); onEdit(); }}>
+            <Edit2 className="w-4 h-4" />
+          </Button>
+        )}
       </div>
       <h3 className="font-semibold text-foreground mb-1">{name}</h3>
       {mentor && <p className="text-xs text-muted-foreground mb-3">Mentor: {mentor}</p>}

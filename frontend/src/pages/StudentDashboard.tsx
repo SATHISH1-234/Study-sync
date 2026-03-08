@@ -273,30 +273,42 @@ function RemindersPage() {
 
   const fetchCourses = async () => {
     try {
-      const res = await api.get(`/groups/student/${user?._id}`);
-      setCourses(res.data.data?.map((g: any) => g.courseId).filter(Boolean) || []);
+      // First, get enrollment status to find approved courses
+      const enrollmentRes = await api.get('/groups/student/' + user?._id);
+      const enrolledCourses = enrollmentRes.data.data?.map((g: any) => g.courseId).filter(Boolean) || [];
+
+      // If no groups found, try direct enrollment requests that are approved
+      if (enrolledCourses.length === 0) {
+        const studentRes = await api.get('/courses');
+        // This is a backup filter, ideally we use the groups endpoint
+        setCourses(studentRes.data.data?.filter((c: any) => c.isEnrolled) || []);
+      } else {
+        setCourses(enrolledCourses);
+      }
     } catch (err) {
-      console.error(err);
+      console.error("Error fetching student courses:", err);
     }
   };
 
   useEffect(() => {
-    fetchReminders();
-    fetchCourses();
+    if (user?._id) {
+      fetchReminders();
+      fetchCourses();
+    }
   }, [user?._id]);
 
   const handleAddReminder = async () => {
     if (!newReminder.courseId || !newReminder.reminderTime || !newReminder.message) {
-      return toast.error("Please fill all fields");
+      return toast.error("Deployment Error: Missing configuration parameters. Please fill all fields.");
     }
     try {
       setIsAdding(true);
       await api.post("/reminders", newReminder);
-      toast.success("AI Study Reminder set!");
+      toast.success("Focus Node Initialized: AI Strategy synced with local timeline.");
       setNewReminder({ courseId: "", reminderTime: "", message: "" });
       fetchReminders();
     } catch (err) {
-      toast.error("Failed to set reminder");
+      toast.error("Network Latency: Failed to sync with AI node.");
     } finally {
       setIsAdding(false);
     }
@@ -365,7 +377,7 @@ function RemindersPage() {
           reminders.map((r, i) => (
             <motion.div
               key={r._id}
-              className="group relative glass-card p-6 overflow-hidden border-primary/10 hover:border-primary/40 transition-all duration-500"
+              className="group relative glass-card p-6 overflow-hidden border-primary/10 hover:border-primary/40 transition-all duration-500 flex flex-col h-full min-h-[220px]"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
