@@ -48,7 +48,7 @@ export default function Login() {
         }, 1000);
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Invalid email or password.", {
+      toast.error(error.response?.data?.message || "Connection failed. The server might be waking up, please try again in a moment.", {
         style: { background: '#fee2e2', color: '#b91c1c', border: '1px solid #fecaca' }
       });
     } finally {
@@ -129,13 +129,13 @@ export default function Login() {
                 {isAdminView && <Cpu className="w-8 h-8 text-primary animate-pulse" />}
                 {isMentorView && <Users className="w-8 h-8 text-accent animate-pulse" />}
                 {!isAdminView && !isMentorView && <BookOpen className="w-8 h-8 text-primary" />}
-                {isAdminView ? "Central Directive" : isMentorView ? "Mentor Nexus" : "Login"}
+                {isAdminView ? "Admin Login" : isMentorView ? "Mentor Portal" : "Login"}
               </h1>
               <p className="text-muted-foreground mt-2">
                 {isAdminView
-                  ? "Establish secure connection to the Neural Nexus"
+                  ? "Access the administrative control center"
                   : isMentorView
-                    ? "Welcome back, Mentor. Ready to oversee the matrix?"
+                    ? "Welcome back, Mentor. Access your teaching dashboard."
                     : "Enter your credentials to access your portal"}
               </p>
             </div>
@@ -148,7 +148,7 @@ export default function Login() {
                   <Input
                     id="email"
                     type="email"
-                    placeholder={isAdminView ? "root@neural.nexus" : "name@university.edu"}
+                    placeholder={isAdminView ? "admin@sip.com" : "student@example.com"}
                     className="pl-12 h-12 bg-secondary/30 border-border/60 rounded-xl focus-visible:ring-primary/20 focus-visible:border-primary/50 transition-all font-medium"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -167,7 +167,7 @@ export default function Login() {
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder={isAdminView ? "••••••••••••" : "••••••••"}
+                    placeholder="••••••••"
                     className="pl-12 pr-12 h-12 bg-secondary/30 border-border/60 rounded-xl focus-visible:ring-primary/20 focus-visible:border-primary/50 transition-all font-medium"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -191,10 +191,10 @@ export default function Login() {
                 {isLoading ? (
                   <div className="flex items-center gap-2">
                     <Loader2 className="w-5 h-5 animate-spin" />
-                    <span>{isAdminView ? "Bypassing Security..." : "Authenticating..."}</span>
+                    <span>{isAdminView ? "Logging in..." : "Authenticating..."}</span>
                   </div>
                 ) : (
-                  isAdminView ? "Synchronize Nexus" : "Login to Dashboard"
+                  isAdminView ? "Login as Admin" : "Login to Dashboard"
                 )}
               </Button>
             </form>

@@ -46,6 +46,12 @@ app.use(express.json());
 // Enable CORS
 app.use(cors());
 
+// Simple request logger
+app.use((req, res, next) => {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+    next();
+});
+
 // Define Routes
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/courses', require('./routes/courseRoutes'));
@@ -64,6 +70,11 @@ app.use('/api/reports', require('./routes/reportRoutes'));
 // Basic Route
 app.get('/', (req, res) => {
     res.json({ message: 'Welcome to the SIP Backend API' });
+});
+
+// Health Check Route for waking up Render
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'active', timestamp: new Date() });
 });
 
 const PORT = process.env.PORT || 5000;

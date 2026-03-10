@@ -50,7 +50,7 @@ export default function Register() {
         }, 1000);
       }
     } catch (error: any) {
-      const message = error.response?.data?.message || "Registration failed.";
+      const message = error.response?.data?.message || "Registration failed. The server might be waking up, please try again in a few seconds.";
       if (message.toLowerCase().includes("exists")) setEmailError("Account already exists with this email.");
       else toast.error(message);
     } finally {
@@ -104,7 +104,7 @@ export default function Register() {
             <div className="space-y-6">
               {[
                 { icon: Globe, text: "Global learning community" },
-                { icon: Laptop, text: "Interactive study modules" },
+                { icon: Laptop, text: "Interactive study lessons" },
                 { icon: Rocket, text: "Accelerated career growth" }
               ].map((item, idx) => (
                 <motion.div

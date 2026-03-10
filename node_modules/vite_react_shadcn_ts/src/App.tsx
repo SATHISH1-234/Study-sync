@@ -14,11 +14,21 @@ import NotFound from "./pages/NotFound";
 
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+import { useEffect } from "react";
+import api from "./utils/api";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
+const App = () => {
+  useEffect(() => {
+    // Ping backend to wake it up (for Render free tier)
+    api.get('/health').catch(() => {
+      // Ignore errors, we just want to send the request
+    });
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <TooltipProvider>
         <Toaster />
@@ -67,7 +77,8 @@ const App = () => (
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>
-  </QueryClientProvider>
-);
+    </QueryClientProvider>
+  );
+};
 
 export default App;
