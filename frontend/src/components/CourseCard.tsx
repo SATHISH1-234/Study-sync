@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { BookOpen, Users, Layers } from "lucide-react";
+import { BookOpen, Users, Layers, Edit2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface CourseCardProps {
@@ -15,47 +15,61 @@ interface CourseCardProps {
 }
 
 export default function CourseCard({ name, students, modules, mentor, progress, onView, onEdit, actionLabel, onAction }: CourseCardProps) {
-  const { Edit2 } = require("lucide-react");
   return (
     <motion.div
-      className="glass-card p-5 flex flex-col"
-      whileHover={{ y: -3 }}
-      transition={{ duration: 0.2 }}
+      className="relative p-6 rounded-3xl border border-border bg-card shadow-lg flex flex-col group cursor-pointer"
+      whileHover={{ borderColor: "rgba(var(--primary), 0.4)" }}
+      transition={{ duration: 0.3 }}
+      onClick={onView}
     >
-      <div className="flex justify-between items-start mb-3">
-        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-          <BookOpen className="w-5 h-5 text-primary" />
+      <div className="flex justify-between items-start mb-4">
+        <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 group-hover:bg-primary/20 transition-colors">
+          <BookOpen className="w-6 h-6 text-primary" />
         </div>
         {onEdit && (
-          <Button variant="ghost" size="icon" className="w-8 h-8 h-8 rounded-lg hover:bg-primary/5 hover:text-primary transition-colors" onClick={(e) => { e.stopPropagation(); onEdit(); }}>
-            <Edit2 className="w-4 h-4" />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="w-10 h-10 rounded-xl hover:bg-primary/10 hover:text-primary transition-all opacity-0 group-hover:opacity-100"
+            onClick={(e) => { e.stopPropagation(); onEdit(); }}
+          >
+            <Edit2 className="w-4.5 h-4.5" />
           </Button>
         )}
       </div>
-      <h3 className="font-semibold text-foreground mb-1">{name}</h3>
-      {mentor && <p className="text-xs text-muted-foreground mb-3">Mentor: {mentor}</p>}
-      <div className="flex items-center gap-4 text-xs text-muted-foreground mt-auto mb-3">
-        <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" />{students}</span>
-        <span className="flex items-center gap-1"><Layers className="w-3.5 h-3.5" />{modules} modules</span>
+
+      <h3 className="text-xl font-bold text-foreground mb-1 group-hover:text-primary transition-colors">{name}</h3>
+      {mentor && <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-4">Lead Mentor: {mentor}</p>}
+
+      <div className="flex items-center gap-5 text-xs font-bold text-muted-foreground mt-auto mb-4">
+        <span className="flex items-center gap-2"><Users className="w-4 h-4 text-primary" />{students} Students</span>
+        <span className="flex items-center gap-2"><Layers className="w-4 h-4 text-primary" />{modules} Modules</span>
       </div>
+
       {progress !== undefined && (
-        <div className="mb-3">
-          <div className="flex justify-between text-xs mb-1">
-            <span className="text-muted-foreground">Progress</span>
-            <span className="text-primary font-medium">{progress}%</span>
+        <div className="mb-4 space-y-2">
+          <div className="flex justify-between items-end">
+            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Neural Completion</span>
+            <span className="text-sm font-black text-primary italic">{progress}%</span>
           </div>
-          <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
-            <div
-              className="h-full rounded-full gradient-primary progress-bar-animate"
-              style={{ "--progress-width": `${progress}%` } as React.CSSProperties}
+          <div className="h-2 bg-secondary/50 rounded-full overflow-hidden border border-white/5">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${progress}%` }}
+              className="h-full gradient-primary rounded-full shadow-[0_0_10px_rgba(var(--primary),0.3)]"
             />
           </div>
         </div>
       )}
+
       {onAction ? (
-        <Button className="w-full text-xs gradient-primary" size="sm" onClick={onAction}>{actionLabel || "Join Course"}</Button>
+        <Button className="w-full h-11 gradient-primary btn-glow font-black uppercase tracking-widest text-[10px]" onClick={(e) => { e.stopPropagation(); onAction(); }}>
+          {actionLabel || "Initialize Sync"}
+        </Button>
       ) : onView ? (
-        <Button variant="outline" size="sm" className="w-full text-xs" onClick={onView}>View Course</Button>
+        <div className="w-full h-11 border border-primary/20 rounded-xl flex items-center justify-center text-[10px] font-black uppercase tracking-widest text-primary group-hover:bg-primary group-hover:text-white transition-all">
+          Access Knowledge
+        </div>
       ) : null}
     </motion.div>
   );

@@ -34,6 +34,29 @@ export default function CourseDetails() {
     const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
     const [completedModules, setCompletedModules] = useState<string[]>([]);
 
+    const getEmbedUrl = (url: string) => {
+        if (!url) return "";
+        let videoId = url.split('v=')[1];
+        if (videoId) {
+            const ampersandPosition = videoId.indexOf('&');
+            if (ampersandPosition !== -1) {
+                videoId = videoId.substring(0, ampersandPosition);
+            }
+            return `https://www.youtube.com/embed/${videoId}`;
+        }
+        if (url.includes('youtu.be/')) {
+            videoId = url.split('youtu.be/')[1];
+            if (videoId) {
+                const queryPosition = videoId.indexOf('?');
+                if (queryPosition !== -1) {
+                    videoId = videoId.substring(0, queryPosition);
+                }
+                return `https://www.youtube.com/embed/${videoId}`;
+            }
+        }
+        return url;
+    };
+
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -75,9 +98,9 @@ export default function CourseDetails() {
     const handleEnroll = async () => {
         try {
             setEnrolling(true);
-            await api.post(`/courses/enroll/${id}`);
+            await api.post(`/courses/${id}/enroll`);
             toast.success("Request sent successfully! Mentor will approve you soon.");
-            setEnrollmentRequested(true); // Set request status to true
+            setEnrollmentRequested(true);
         } catch (err: any) {
             toast.error(err.response?.data?.message || "Enrollment failed");
         } finally {
@@ -104,7 +127,7 @@ export default function CourseDetails() {
                         <div className="glass-card overflow-hidden aspect-video bg-black rounded-2xl shadow-2xl relative group">
                             {selectedVideo ? (
                                 <iframe
-                                    src={selectedVideo}
+                                    src={getEmbedUrl(selectedVideo)}
                                     className="w-full h-full"
                                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                     allowFullScreen

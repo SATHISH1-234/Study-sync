@@ -75,6 +75,7 @@ exports.loginUser = async (req, res) => {
         const user = await User.findOne({ email }).select('+password');
 
         if (user && (await user.matchPassword(password))) {
+            console.log(`🛡️  Neural Auth: Role [${user.role}] Synced for [${user.email}]`);
             res.json({
                 success: true,
                 _id: user._id,

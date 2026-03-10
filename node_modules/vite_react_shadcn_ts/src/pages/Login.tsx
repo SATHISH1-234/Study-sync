@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { BookOpen, Mail, Lock, Loader2, ArrowLeft, Eye, EyeOff, ShieldCheck } from "lucide-react";
+import { BookOpen, Mail, Lock, Loader2, ArrowLeft, Eye, EyeOff, ShieldCheck, Cpu, Users } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import api from "@/utils/api";
@@ -16,6 +16,13 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Advanced role detection for UI themes
+  const queryParams = new URLSearchParams(location.search);
+  const targetRole = queryParams.get('role');
+  const isAdminView = targetRole === 'admin';
+  const isMentorView = targetRole === 'mentor';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -118,8 +125,19 @@ export default function Login() {
             </div>
 
             <div className="mb-10 text-center lg:text-left">
-              <h1 className="text-3xl font-extrabold text-foreground tracking-tight">Login</h1>
-              <p className="text-muted-foreground mt-2">Enter your credentials to access your portal</p>
+              <h1 className="text-3xl font-extrabold text-foreground tracking-tight flex items-center justify-center lg:justify-start gap-2">
+                {isAdminView && <Cpu className="w-8 h-8 text-primary animate-pulse" />}
+                {isMentorView && <Users className="w-8 h-8 text-accent animate-pulse" />}
+                {!isAdminView && !isMentorView && <BookOpen className="w-8 h-8 text-primary" />}
+                {isAdminView ? "Central Directive" : isMentorView ? "Mentor Nexus" : "Login"}
+              </h1>
+              <p className="text-muted-foreground mt-2">
+                {isAdminView
+                  ? "Establish secure connection to the Neural Nexus"
+                  : isMentorView
+                    ? "Welcome back, Mentor. Ready to oversee the matrix?"
+                    : "Enter your credentials to access your portal"}
+              </p>
             </div>
 
             <form className="space-y-6" onSubmit={handleSubmit}>
@@ -130,7 +148,7 @@ export default function Login() {
                   <Input
                     id="email"
                     type="email"
-                    placeholder="name@university.edu"
+                    placeholder={isAdminView ? "root@neural.nexus" : "name@university.edu"}
                     className="pl-12 h-12 bg-secondary/30 border-border/60 rounded-xl focus-visible:ring-primary/20 focus-visible:border-primary/50 transition-all font-medium"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -141,7 +159,7 @@ export default function Login() {
 
               <div className="space-y-2 text-left">
                 <div className="flex items-center justify-between ml-1">
-                  <Label htmlFor="password" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Password</Label>
+                  <Label htmlFor="password" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{isAdminView ? "Access Code" : "Password"}</Label>
                   <a href="#" className="text-xs font-semibold text-primary hover:underline">Forgot?</a>
                 </div>
                 <div className="relative group">
@@ -149,7 +167,7 @@ export default function Login() {
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
+                    placeholder={isAdminView ? "••••••••••••" : "••••••••"}
                     className="pl-12 pr-12 h-12 bg-secondary/30 border-border/60 rounded-xl focus-visible:ring-primary/20 focus-visible:border-primary/50 transition-all font-medium"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -173,19 +191,41 @@ export default function Login() {
                 {isLoading ? (
                   <div className="flex items-center gap-2">
                     <Loader2 className="w-5 h-5 animate-spin" />
-                    <span>Authenticating...</span>
+                    <span>{isAdminView ? "Bypassing Security..." : "Authenticating..."}</span>
                   </div>
                 ) : (
-                  "Login to Dashboard"
+                  isAdminView ? "Synchronize Nexus" : "Login to Dashboard"
                 )}
               </Button>
             </form>
 
             <div className="mt-8 text-center bg-secondary/20 p-4 rounded-2xl border border-border/40">
-              <p className="text-sm text-muted-foreground font-medium">
-                New to the platform?{" "}
-                <Link to="/register" className="text-primary font-bold hover:underline ml-1">Create an account</Link>
-              </p>
+              {isAdminView ? (
+                <div className="space-y-3">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Administrative Bypass</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full border-primary/20 hover:bg-primary/5 text-primary text-[10px] uppercase font-bold"
+                    onClick={() => {
+                      setEmail("admin@sip.com");
+                      setPassword("adminpassword123");
+                    }}
+                  >
+                    Sync Admin Credentials
+                  </Button>
+                </div>
+              ) : isMentorView ? (
+                <div className="space-y-3">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Mentor Access Portal</p>
+                  <Link to="/register" className="text-primary font-bold hover:underline block text-sm">Become a Mentor</Link>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground font-medium">
+                  New to the platform?{" "}
+                  <Link to="/register" className="text-primary font-bold hover:underline ml-1">Create an account</Link>
+                </p>
+              )}
             </div>
           </div>
         </div>

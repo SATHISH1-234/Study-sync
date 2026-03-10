@@ -11,7 +11,32 @@ dns.setServers(['8.8.8.8', '1.1.1.1']);
 dotenv.config();
 
 // Connect to database
-connectDB();
+connectDB().then(async () => {
+    try {
+        const User = require('./models/User');
+        // Check by email to prevent duplicate key errors if role changed
+        const adminEmail = 'admin@sip.com';
+        const adminExists = await User.findOne({ email: adminEmail });
+
+        if (!adminExists) {
+            await User.create({
+                name: 'System Administrator',
+                email: adminEmail,
+                password: 'adminpassword123',
+                role: 'admin'
+            });
+            console.log('🛡️  Neural Index: Admin Account Initialized [admin@sip.com]');
+        } else if (adminExists.role !== 'admin') {
+            adminExists.role = 'admin';
+            await adminExists.save();
+            console.log('🛡️  Neural Index: User elevated to Admin Clearance [admin@sip.com]');
+        } else {
+            console.log('🛡️  Neural Index: Admin Node Active [admin@sip.com]');
+        }
+    } catch (err) {
+        console.error('❌ Neural Index: Admin Seeding Failed ->', err.message);
+    }
+});
 
 const app = express();
 
@@ -34,6 +59,7 @@ app.use('/api/enrollments', require('./routes/enrollmentRoutes'));
 app.use('/api/progress', require('./routes/progressRoutes'));
 app.use('/api/sessions', require('./routes/sessionRoutes'));
 app.use('/api/ai', require('./routes/aiRoutes'));
+app.use('/api/reports', require('./routes/reportRoutes'));
 
 // Basic Route
 app.get('/', (req, res) => {

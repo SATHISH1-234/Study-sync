@@ -23,6 +23,25 @@ exports.addModule = async (req, res) => {
         course.modulesCount = await Module.countDocuments({ courseId: course._id });
         await course.save();
 
+        // Notify students enrolled in this course via groups
+        const Group = require('../models/Group');
+        const Notification = require('../models/Notification');
+        const groups = await Group.find({ courseId: course._id });
+
+        for (const group of groups) {
+            if (group.students && group.students.length > 0) {
+                const notifications = group.students.map(studentId => ({
+                    recipient: studentId,
+                    sender: req.user._id,
+                    title: 'New Module Added',
+                    message: `A new module "${moduleItem.title}" has been added to ${course.title}. Check it out!`,
+                    type: 'course',
+                    targetUrl: `/student/courses/${course._id}`
+                }));
+                await Notification.insertMany(notifications, { ordered: false }).catch(err => console.error("Notification broadcast error:", err));
+            }
+        }
+
         res.status(201).json({ success: true, data: moduleItem });
     } catch (error) {
         res.status(400).json({ success: false, message: error.message });

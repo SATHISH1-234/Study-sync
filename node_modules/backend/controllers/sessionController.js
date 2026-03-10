@@ -16,6 +16,17 @@ exports.recordSession = async (req, res) => {
             cameraActive
         });
 
+        // Notify student about their session summary
+        const Notification = require('../models/Notification');
+        await Notification.create({
+            recipient: studentId,
+            sender: studentId,
+            title: 'Focus Session Synced',
+            message: `Neural optimization complete! Duration: ${duration}min. Focus Score: ${focusScore}%`,
+            type: focusScore > 80 ? 'success' : 'info',
+            targetUrl: '/student/progress'
+        });
+
         res.status(201).json({ success: true, data: session });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

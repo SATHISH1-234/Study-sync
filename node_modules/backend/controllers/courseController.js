@@ -13,7 +13,7 @@ exports.getCourses = async (req, res) => {
         const courses = await Course.find().populate('mentorId', 'name');
         res.status(200).json({ success: true, count: courses.length, data: courses });
     } catch (error) {
-        res.status(500).json({ success: true, message: error.message });
+        res.status(500).json({ success: false, message: error.message });
     }
 };
 
@@ -38,10 +38,7 @@ exports.getCourse = async (req, res) => {
 exports.getMentorCourses = async (req, res) => {
     try {
         const courses = await Course.find({ mentorId: req.params.mentorId }).populate('mentorId', 'name');
-        if (!courses || courses.length === 0) {
-            return res.status(404).json({ success: false, message: `No courses found for mentor with ID ${req.params.mentorId}` });
-        }
-        res.status(200).json({ success: true, count: courses.length, data: courses });
+        res.status(200).json({ success: true, count: courses?.length || 0, data: courses || [] });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }

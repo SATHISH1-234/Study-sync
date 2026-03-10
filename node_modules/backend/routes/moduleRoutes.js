@@ -12,6 +12,7 @@ const { protect, authorize } = require('../utils/authMiddleware');
 
 router.post('/', protect, authorize('admin', 'mentor'), addModule);
 router.get('/:courseId', getModulesByCourse);
+router.get('/course/:courseId', getModulesByCourse);
 router.put('/:id', protect, authorize('admin', 'mentor'), updateModule);
 router.delete('/:id', protect, authorize('admin', 'mentor'), deleteModule);
 

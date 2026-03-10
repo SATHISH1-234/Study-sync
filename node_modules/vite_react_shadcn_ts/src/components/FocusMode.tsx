@@ -14,6 +14,14 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter,
+} from "@/components/ui/dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import api from "@/utils/api";
 import { toast } from "sonner";
@@ -29,7 +37,10 @@ export default function FocusMode() {
     const [selectedModule, setSelectedModule] = useState("");
     const [isFaceDetected, setIsFaceDetected] = useState(true);
     const [modelsLoaded, setModelsLoaded] = useState(false);
-    const [loading, setLoading] = useState(false);
+    const [trackingEnabled, setTrackingEnabled] = useState(true);
+    const [loading, setLoading] = useState(true);
+    const [focusLost, setFocusLost] = useState(false);
+    const [missingFrames, setMissingFrames] = useState(0);
 
     const webcamRef = useRef<Webcam>(null);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -55,12 +66,19 @@ export default function FocusMode() {
         loadModels();
     }, []);
 
-    // Fetch courses
     useEffect(() => {
         if (user?._id) {
+            setLoading(true);
             api.get(`/groups/student/${user._id}`)
-                .then(res => setCourses(res.data.data?.map((g: any) => g.courseId).filter(Boolean) || []))
-                .catch(err => console.error(err));
+                .then(res => {
+                    const enrolledCourses = res.data.data?.map((g: any) => g.courseId).filter(Boolean) || [];
+                    setCourses(enrolledCourses);
+                    setLoading(false);
+                })
+                .catch(err => {
+                    console.error(err);
+                    setLoading(false);
+                });
         }
     }, [user?._id]);
 
@@ -75,33 +93,37 @@ export default function FocusMode() {
 
     // Detection loop
     useEffect(() => {
-        if (running && modelsLoaded) {
+        if (running && modelsLoaded && trackingEnabled) {
             detectionRef.current = setInterval(async () => {
                 if (webcamRef.current && webcamRef.current.video) {
                     const video = webcamRef.current.video;
                     const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions());
 
                     if (detections.length === 0) {
-                        if (isFaceDetected) {
-                            setIsFaceDetected(false);
-                            toast.warning("Eyes on the prize! We can't see you.", {
-                                description: "Stay in the camera frame to maintain your focus score.",
-                                duration: 3000
-                            });
-                        }
+                        setMissingFrames(prev => {
+                            const next = prev + 1;
+                            if (next >= 2) { // About 4 seconds of missing face
+                                setFocusLost(true);
+                                setRunning(false);
+                                setIsFaceDetected(false);
+                                return 0;
+                            }
+                            return next;
+                        });
                     } else {
+                        setMissingFrames(0);
                         setIsFaceDetected(true);
                     }
                 }
-            }, 3000); // Check every 3 seconds
+            }, 2000); // Check every 2 seconds
         } else {
             if (detectionRef.current) clearInterval(detectionRef.current);
-            setIsFaceDetected(true);
+            // Don't reset isFaceDetected here as it might be needed for the UI state
         }
         return () => {
             if (detectionRef.current) clearInterval(detectionRef.current);
         };
-    }, [running, modelsLoaded, isFaceDetected]);
+    }, [running, modelsLoaded, trackingEnabled]);
 
     // Timer loop
     useEffect(() => {
@@ -123,6 +145,9 @@ export default function FocusMode() {
             return;
         }
         setRunning(true);
+        toast.info("Neural Nexus Initialized", {
+            description: "Stay locked in! You have to focus on your studies to maximize SIP credits.",
+        });
     };
 
     const handleEndSession = async () => {
@@ -157,240 +182,343 @@ export default function FocusMode() {
         }
     };
 
+    const getEmbedUrl = (url: string) => {
+        if (!url) return "";
+        let videoId = url.split('v=')[1];
+        if (videoId) {
+            const ampersandPosition = videoId.indexOf('&');
+            if (ampersandPosition !== -1) {
+                videoId = videoId.substring(0, ampersandPosition);
+            }
+            return `https://www.youtube.com/embed/${videoId}`;
+        }
+        if (url.includes('youtu.be/')) {
+            videoId = url.split('youtu.be/')[1];
+            if (videoId) {
+                const queryPosition = videoId.indexOf('?');
+                if (queryPosition !== -1) {
+                    videoId = videoId.substring(0, queryPosition);
+                }
+                return `https://www.youtube.com/embed/${videoId}`;
+            }
+        }
+        return url;
+    };
+
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     const progress = ((25 * 60 - seconds) / (25 * 60)) * 100;
+    const activeModule = modules.find(m => m._id === selectedModule);
+    const videoUrl = activeModule?.videoEmbedLink ? getEmbedUrl(activeModule.videoEmbedLink) : null;
 
     return (
-        <div className="space-y-8 max-w-4xl mx-auto py-6">
+        <div className="space-y-8 max-w-6xl mx-auto py-6 px-4">
             <div className="text-center space-y-2">
-                <h2 className="text-3xl font-extrabold text-foreground bg-clip-text">Deep Work Focus</h2>
-                <p className="text-muted-foreground">Boost your learning efficiency with AI-monitored sessions.</p>
+                <h2 className="text-4xl font-black text-foreground tracking-tighter italic">NEURAL FOCUS <span className="text-primary">CORE</span></h2>
+                <p className="text-muted-foreground font-medium">Activate deep learning state with AI biometrics.</p>
             </div>
 
-            {!running ? (
+            {loading && (
+                <div className="flex flex-col items-center justify-center py-20 space-y-4">
+                    <Loader2 className="w-12 h-12 animate-spin text-primary" />
+                    <p className="text-sm font-medium text-muted-foreground animate-pulse uppercase tracking-[0.2em]">Syncing Neural Data...</p>
+                </div>
+            )}
+
+            {!loading && courses.length === 0 && (
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="glass-card p-12 text-center border-dashed border-primary/40 space-y-6"
+                >
+                    <div className="w-20 h-20 rounded-3xl bg-primary/10 flex items-center justify-center mx-auto">
+                        <ShieldAlert className="w-10 h-10 text-primary" />
+                    </div>
+                    <div className="space-y-2">
+                        <h3 className="text-2xl font-bold">No Active Enrollments</h3>
+                        <p className="text-muted-foreground max-w-md mx-auto">You must be enrolled in at least one approved course to initialize a neural focus session.</p>
+                    </div>
+                    <Button onClick={() => window.location.href = '/student/courses'} className="gradient-primary px-8 h-12 font-bold uppercase tracking-widest">
+                        Explore Courses
+                    </Button>
+                </motion.div>
+            )}
+
+            {courses.length > 0 && !running ? (
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="glass-card p-10 space-y-8 border-primary/20 bg-gradient-to-br from-primary/5 via-transparent to-accent/5"
+                    className="glass-card p-10 space-y-8 border-primary/20 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 relative overflow-hidden"
                 >
-                    <div className="grid md:grid-cols-2 gap-6">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[100px] -mr-32 -mt-32" />
+
+                    <div className="grid md:grid-cols-2 gap-8 relative z-10">
                         <div className="space-y-3">
-                            <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Current Course</label>
-                            <Select value={selectedCourse} onValueChange={setSelectedCourse}>
-                                <SelectTrigger className="h-12 bg-secondary/30 border-border/60 rounded-xl">
-                                    <SelectValue placeholder="Which course are you studying?" />
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary ml-1">Protocol Course</label>
+                            <Select value={selectedCourse} onValueChange={(val) => { if (val !== "none") setSelectedCourse(val); }}>
+                                <SelectTrigger className="h-14 bg-secondary/20 border-border/40 rounded-2xl text-base font-semibold">
+                                    <SelectValue placeholder="Identify subject..." />
                                 </SelectTrigger>
-                                <SelectContent>
-                                    {courses.map(c => (
-                                        <SelectItem key={c._id} value={c._id || ""}>{c.title}</SelectItem>
-                                    ))}
+                                <SelectContent className="glass-card">
+                                    {courses.length > 0 ? courses.map(c => (
+                                        <SelectItem key={c._id} value={c._id || ""} className="font-medium">{c.title}</SelectItem>
+                                    )) : (
+                                        <SelectItem value="none" disabled>No courses found</SelectItem>
+                                    )}
                                 </SelectContent>
                             </Select>
                         </div>
 
                         <div className="space-y-3">
-                            <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Current Module</label>
-                            <Select value={selectedModule} onValueChange={setSelectedModule} disabled={!selectedCourse}>
-                                <SelectTrigger className="h-12 bg-secondary/30 border-border/60 rounded-xl">
-                                    <SelectValue placeholder="Select a module..." />
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary ml-1">Learning Module</label>
+                            <Select value={selectedModule} onValueChange={(val) => { if (val !== "none") setSelectedModule(val); }} disabled={!selectedCourse}>
+                                <SelectTrigger className="h-14 bg-secondary/20 border-border/40 rounded-2xl text-base font-semibold">
+                                    <SelectValue placeholder="Select target node..." />
                                 </SelectTrigger>
-                                <SelectContent>
-                                    {modules.map(m => (
-                                        <SelectItem key={m._id} value={m._id || ""}>{m.title}</SelectItem>
-                                    ))}
+                                <SelectContent className="glass-card">
+                                    {modules.length > 0 ? modules.map(m => (
+                                        <SelectItem key={m._id} value={m._id || ""} className="font-medium">{m.title}</SelectItem>
+                                    )) : (
+                                        <SelectItem value="none" disabled>No modules available</SelectItem>
+                                    )}
                                 </SelectContent>
                             </Select>
                         </div>
                     </div>
 
-                    <div className="grid md:grid-cols-3 gap-6 pt-4">
-                        <div className="p-4 rounded-2xl bg-secondary/20 border border-border/40 flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                                <Camera className="w-5 h-5 text-primary" />
+                    <div className="grid md:grid-cols-3 gap-6 pt-4 relative z-10">
+                        <div className="p-5 rounded-3xl bg-secondary/10 border border-border/40 flex items-center gap-4 hover:bg-secondary/20 transition-colors">
+                            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20">
+                                <Camera className="w-6 h-6 text-primary" />
                             </div>
                             <div className="text-left">
-                                <p className="text-[10px] font-bold uppercase text-muted-foreground">Webcam</p>
-                                <p className="text-xs font-semibold">Eye Tracking Enabled</p>
+                                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Vision API</p>
+                                <p className="text-sm font-bold">Active Tracking</p>
                             </div>
                         </div>
-                        <div className="p-4 rounded-2xl bg-secondary/20 border border-border/40 flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center">
-                                <Layout className="w-5 h-5 text-accent" />
+                        <div className="p-5 rounded-3xl bg-secondary/10 border border-border/40 flex items-center gap-4 hover:bg-secondary/20 transition-colors">
+                            <div className="w-12 h-12 rounded-2xl bg-accent/10 flex items-center justify-center border border-accent/20">
+                                <Layout className="w-6 h-6 text-accent" />
                             </div>
                             <div className="text-left">
-                                <p className="text-[10px] font-bold uppercase text-muted-foreground">Auto-Track</p>
-                                <p className="text-xs font-semibold">Progress Syncs Late</p>
+                                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Proof of Work</p>
+                                <p className="text-sm font-bold">Auto-Syncing</p>
                             </div>
                         </div>
-                        <div className="p-4 rounded-2xl bg-secondary/20 border border-border/40 flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
-                                <CheckCircle2 className="w-5 h-5 text-green-500" />
+                        <div className="p-5 rounded-3xl bg-secondary/10 border border-border/40 flex items-center gap-4 hover:bg-secondary/20 transition-colors">
+                            <div className="w-12 h-12 rounded-2xl bg-green-500/10 flex items-center justify-center border border-green-500/20">
+                                <CheckCircle2 className="w-6 h-6 text-green-500" />
                             </div>
                             <div className="text-left">
-                                <p className="text-[10px] font-bold uppercase text-muted-foreground">Rewards</p>
-                                <p className="text-xs font-semibold">Earn SIP Credits</p>
+                                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Neural Yield</p>
+                                <p className="text-sm font-bold">SIP Credits</p>
                             </div>
                         </div>
                     </div>
 
                     <Button
-                        className="w-full h-14 text-lg font-bold gradient-primary btn-glow rounded-2xl shadow-xl shadow-primary/20"
+                        className="w-full h-16 text-xl font-black gradient-primary btn-glow rounded-3xl shadow-2xl shadow-primary/20 uppercase tracking-[0.3em] italic"
                         onClick={handleStart}
-                        disabled={!selectedCourse || !selectedModule}
+                        disabled={!selectedCourse || !selectedModule || !modelsLoaded}
                     >
-                        <Play className="w-5 h-5 mr-3 fill-current" /> Initialize Session
+                        <Play className="w-6 h-6 mr-4 fill-current" /> {modelsLoaded ? "Initialize Session" : "Loading Neural Engine..."}
                     </Button>
                 </motion.div>
-            ) : (
-                <div className="grid lg:grid-cols-5 gap-8">
-                    {/* Left Column: Timer and Controls */}
-                    <div className="lg:col-span-3 space-y-8 flex flex-col items-center">
-                        <AnimatePresence>
-                            {!isFaceDetected && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: -20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: -20 }}
-                                    className="w-full"
-                                >
-                                    <Alert variant="destructive" className="bg-destructive/10 border-destructive/50 animate-bounce-slow">
-                                        <ShieldAlert className="h-4 w-4" />
-                                        <AlertTitle>Attention Required!</AlertTitle>
-                                        <AlertDescription>
-                                            We can't detect you. Please stay within the camera frame to keep your session active.
-                                        </AlertDescription>
-                                    </Alert>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
+            ) : null}
 
-                        <motion.div
-                            className="relative w-72 h-72 flex items-center justify-center"
-                            animate={running ? {
-                                boxShadow: isFaceDetected
-                                    ? ["0 0 0 0 hsl(230 80% 56% / 0.3)", "0 0 0 20px hsl(230 80% 56% / 0)", "0 0 0 0 hsl(230 80% 56% / 0.3)"]
-                                    : ["0 0 0 0 hsl(0 80% 56% / 0.3)", "0 0 0 20px hsl(0 80% 56% / 0)", "0 0 0 0 hsl(0 80% 56% / 0.3)"]
-                            } : {}}
-                            transition={{ duration: 2, repeat: Infinity }}
-                            style={{ borderRadius: "50%" }}
-                        >
-                            <svg className="absolute inset-0 -rotate-90" viewBox="0 0 224 224">
-                                <circle cx="112" cy="112" r="100" fill="none" stroke="hsl(var(--secondary))" strokeWidth="8" />
-                                <circle
-                                    cx="112" cy="112" r="100" fill="none"
-                                    stroke={isFaceDetected ? "url(#timerGradient)" : "hsl(var(--destructive))"}
-                                    strokeWidth="8"
-                                    strokeLinecap="round"
-                                    strokeDasharray={`${2 * Math.PI * 100}`}
-                                    strokeDashoffset={`${2 * Math.PI * 100 * (1 - progress / 100)}`}
-                                    className="transition-all duration-1000"
+            {running && (
+                <div className="relative h-[70vh] w-full flex items-center justify-center bg-card/30 backdrop-blur-xl rounded-[40px] border border-border/40 overflow-hidden shadow-3xl">
+                    <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-accent/5" />
+
+                    {/* Corner Video Box - Top Right */}
+                    <div className="absolute top-10 right-10 w-60 aspect-video rounded-2xl overflow-hidden border-4 border-background/50 shadow-2xl bg-black z-50 ring-1 ring-primary/20 group transition-all hover:scale-105 duration-500">
+                        {(() => {
+                            const WebcamComp = Webcam as any;
+                            return (
+                                <WebcamComp
+                                    audio={false}
+                                    ref={webcamRef}
+                                    className="w-full h-full object-cover grayscale brightness-110 contrast-125"
+                                    mirrored={true}
                                 />
-                                <defs>
-                                    <linearGradient id="timerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                        <stop offset="0%" stopColor="hsl(230, 80%, 56%)" />
-                                        <stop offset="100%" stopColor="hsl(270, 70%, 60%)" />
-                                    </linearGradient>
-                                </defs>
-                            </svg>
-                            <div className="text-center z-10">
-                                <span className="text-6xl font-black text-foreground tabular-nums tracking-tighter">
-                                    {String(mins).padStart(2, "0")}:{String(secs).padStart(2, "0")}
-                                </span>
-                                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-2">Time Remaining</p>
-                            </div>
-                        </motion.div>
+                            );
+                        })()}
+                        <div className="absolute inset-0 border-2 border-primary/20 rounded-2xl pointer-events-none" />
+                        <div className="absolute top-3 left-3 flex items-center gap-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded-lg border border-white/10">
+                            <div className={`w-1.5 h-1.5 rounded-full ${isFaceDetected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
+                            <span className="text-[8px] font-black text-white uppercase tracking-tighter">AI Eye-Tracking</span>
+                        </div>
+                        {!isFaceDetected && (
+                            <div className="absolute inset-0 border-4 border-destructive/80 animate-pulse pointer-events-none" />
+                        )}
+                    </div>
 
-                        <div className="flex items-center gap-4 w-full">
+
+
+                    {/* Main Content Area - Video + Floating Timer */}
+                    <div className="relative z-10 w-full h-full flex flex-col items-center justify-center p-10 gap-8">
+                        {videoUrl ? (
+                            <div className="w-full max-w-4xl aspect-video rounded-[32px] overflow-hidden border-4 border-white/5 shadow-2xl bg-black/40 backdrop-blur-md relative group">
+                                <iframe
+                                    src={videoUrl}
+                                    className="w-full h-full"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                    allowFullScreen
+                                ></iframe>
+
+                                {/* Floating Overlay Timer when Video is present */}
+                                <div className="absolute bottom-6 left-6 flex items-center gap-4 bg-black/60 backdrop-blur-xl p-4 rounded-2xl border border-white/10 group-hover:scale-110 transition-transform">
+                                    <div className="text-center">
+                                        <span className="text-3xl font-black italic tabular-nums text-white">
+                                            {String(mins).padStart(2, "0")}:{String(secs).padStart(2, "0")}
+                                        </span>
+                                        <p className="text-[8px] font-black uppercase tracking-widest text-primary">Neural Lock</p>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="relative z-10 flex flex-col items-center gap-8">
+                                <motion.div
+                                    className="relative w-80 h-80 flex items-center justify-center"
+                                    animate={running ? {
+                                        boxShadow: isFaceDetected
+                                            ? ["0 0 0 0 hsl(230 80% 56% / 0.2)", "0 0 0 40px hsl(230 80% 56% / 0)", "0 0 0 0 hsl(230 80% 56% / 0.2)"]
+                                            : ["0 0 0 0 hsl(0 80% 56% / 0.4)", "0 0 0 60px hsl(0 80% 56% / 0)", "0 0 0 0 hsl(0 80% 56% / 0.4)"]
+                                    } : {}}
+                                    transition={{ duration: 2, repeat: Infinity }}
+                                >
+                                    <svg className="absolute inset-0 -rotate-90" viewBox="0 0 224 224">
+                                        <circle cx="112" cy="112" r="105" fill="none" stroke="hsl(var(--secondary)/0.3)" strokeWidth="10" />
+                                        <circle
+                                            cx="112" cy="112" r="105" fill="none"
+                                            stroke={isFaceDetected ? "url(#timerGradient)" : "hsl(var(--destructive))"}
+                                            strokeWidth="10"
+                                            strokeLinecap="round"
+                                            strokeDasharray={`${2 * Math.PI * 105}`}
+                                            strokeDashoffset={`${2 * Math.PI * 105 * (1 - progress / 100)}`}
+                                            className="transition-all duration-1000"
+                                        />
+                                        <defs>
+                                            <linearGradient id="timerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                <stop offset="0%" stopColor="hsl(230, 80%, 56%)" />
+                                                <stop offset="100%" stopColor="hsl(270, 70%, 60%)" />
+                                            </linearGradient>
+                                        </defs>
+                                    </svg>
+                                    <div className="text-center z-10">
+                                        <span className={`text-8xl font-black italic tabular-nums tracking-tighter transition-colors duration-500 ${isFaceDetected ? 'text-foreground' : 'text-destructive scale-110'}`}>
+                                            {String(mins).padStart(2, "0")}:{String(secs).padStart(2, "0")}
+                                        </span>
+                                        <p className="text-xs font-black uppercase tracking-[0.4em] text-muted-foreground mt-4">Remaining Lock-in</p>
+                                    </div>
+                                </motion.div>
+                            </div>
+                        )}
+
+                        <div className="flex items-center gap-6">
                             <Button
                                 variant="outline"
-                                size="icon"
-                                className="h-14 w-14 rounded-2xl border-border/60 hover:bg-secondary transition-all"
-                                onClick={() => { setRunning(false); setSeconds(25 * 60); }}
+                                title="Pause Tracking"
+                                className="h-16 w-16 rounded-[20px] border-border/60 hover:bg-secondary/50 transition-all hover:scale-110 active:scale-95"
+                                onClick={() => setRunning(false)}
                             >
-                                <RotateCcw className="w-6 h-6" />
+                                <Pause className="w-7 h-7" />
                             </Button>
                             <Button
                                 size="lg"
-                                className="flex-1 h-14 text-lg font-bold gradient-primary text-white btn-glow rounded-2xl"
+                                className="px-10 h-16 text-lg font-black gradient-primary text-white btn-glow rounded-[20px] uppercase tracking-widest shadow-2xl shadow-primary/30 active:scale-95 transition-transform"
                                 onClick={handleEndSession}
                                 disabled={loading}
                             >
-                                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Pause className="w-5 h-5 mr-3 fill-current" /> Save Session & Take Break</>}
+                                {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <><CheckCircle2 className="w-6 h-6 mr-4 fill-current" /> Finish & Sync</>}
                             </Button>
-                        </div>
-
-                        <div className="glass-card p-4 w-full flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                                    <BookOpen className="w-4 h-4 text-primary" />
-                                </div>
-                                <div>
-                                    <p className="text-[10px] font-bold text-muted-foreground uppercase leading-none">Studying</p>
-                                    <p className="text-sm font-semibold truncate max-w-[150px]">{modules.find(m => m._id === selectedModule)?.title}</p>
-                                </div>
-                            </div>
-                            <div className="text-right">
-                                <p className="text-[10px] font-bold text-muted-foreground uppercase leading-none">Status</p>
-                                <div className="flex items-center gap-1.5 mt-0.5">
-                                    <div className={`w-2 h-2 rounded-full ${isFaceDetected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
-                                    <span className="text-xs font-bold">{isFaceDetected ? 'Active' : 'Alert'}</span>
-                                </div>
-                            </div>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                title="Discard Session"
+                                className="h-16 w-16 rounded-[20px] text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all"
+                                onClick={() => { if (confirm("Discard current neural session?")) { setRunning(false); setSeconds(25 * 60); setSelectedModule(""); } }}
+                            >
+                                <RotateCcw className="w-7 h-7" />
+                            </Button>
                         </div>
                     </div>
 
-                    {/* Right Column: WebCam View */}
-                    <div className="lg:col-span-2 space-y-4">
-                        <div className="relative group aspect-video rounded-3xl overflow-hidden border-2 border-border/40 shadow-2xl bg-black">
-                            {(() => {
-                                const WebcamComp = Webcam as any;
-                                return (
-                                    <WebcamComp
-                                        audio={false}
-                                        ref={webcamRef}
-                                        screenshotFormat="image/jpeg"
-                                        className="w-full h-full object-cover grayscale brightness-125 contrast-125"
-                                        mirrored={true}
-                                    />
-                                );
-                            })()}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                            <div className="absolute top-4 left-4 p-2 bg-black/50 backdrop-blur-md rounded-lg flex items-center gap-2 border border-white/10">
-                                <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                                <span className="text-[10px] font-bold text-white uppercase tracking-widest">Live Detection</span>
+                    {/* Stats Bar */}
+                    <div className="absolute top-10 left-10 right-10 flex justify-between items-center z-10">
+                        <div className="flex items-center gap-4 bg-background/40 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/5">
+                            <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                                <BookOpen className="w-5 h-5 text-primary" />
                             </div>
-
-                            {!isFaceDetected && (
-                                <div className="absolute inset-0 border-4 border-destructive/80 animate-pulse pointer-events-none" />
-                            )}
-
-                            {/* Face Guide Overlay */}
-                            <div className="absolute inset-0 flex items-center justify-center opacity-30 pointer-events-none">
-                                <div className="w-48 h-64 border-2 border-white/50 border-dashed rounded-[60px]" />
+                            <div>
+                                <p className="text-[10px] font-black text-muted-foreground uppercase leading-none mb-1 tracking-tighter">Current Matrix</p>
+                                <p className="text-sm font-bold truncate max-w-[200px] italic">{modules.find(m => m._id === selectedModule)?.title}</p>
                             </div>
                         </div>
 
-                        <div className="glass-card p-5 space-y-4">
-                            <h4 className="font-bold text-sm flex items-center gap-2"><LayoutIcon className="w-4 h-4 text-primary" /> How it works</h4>
-                            <ul className="text-xs text-muted-foreground space-y-3">
-                                <li className="flex gap-2">
-                                    <div className="w-5 h-5 rounded-full bg-secondary flex items-center justify-center flex-shrink-0 text-[10px] font-bold">1</div>
-                                    <span>Our AI uses your camera to monitor your focus levels in real-time.</span>
-                                </li>
-                                <li className="flex gap-2">
-                                    <div className="w-5 h-5 rounded-full bg-secondary flex items-center justify-center flex-shrink-0 text-[10px] font-bold">2</div>
-                                    <span>If you look away or leave your seat, we'll give you a gentle nudge.</span>
-                                </li>
-                                <li className="flex gap-2">
-                                    <div className="w-5 h-5 rounded-full bg-secondary flex items-center justify-center flex-shrink-0 text-[10px] font-bold">3</div>
-                                    <span>Finish the session to earn SIP credits and sync proof of work.</span>
-                                </li>
-                            </ul>
+                        <div className="flex items-center gap-8">
+                            <div className="text-right">
+                                <p className="text-[10px] font-black text-muted-foreground uppercase leading-none mb-2 tracking-tighter">AI Monitoring</p>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className={`h-6 px-3 text-[9px] font-black uppercase rounded-lg border flex items-center gap-2 transition-all ${trackingEnabled ? 'border-primary/20 text-primary bg-primary/5' : 'border-destructive/20 text-destructive bg-destructive/5'}`}
+                                    onClick={() => setTrackingEnabled(!trackingEnabled)}
+                                >
+                                    <div className={`w-1.5 h-1.5 rounded-full ${trackingEnabled ? 'bg-primary' : 'bg-destructive'}`} />
+                                    {trackingEnabled ? 'ACTIVE' : 'MUTED'}
+                                </Button>
+                            </div>
+
+                            <div className="text-right border-l border-border/40 pl-8">
+                                <p className="text-[10px] font-black text-muted-foreground uppercase leading-none mb-1 tracking-tighter">Signal Stability</p>
+                                <div className="flex items-center gap-2 mt-1.5">
+                                    <div className="flex gap-0.5">
+                                        {[1, 2, 3, 4].map(x => (
+                                            <div key={x} className={`w-1 h-3 rounded-full ${isFaceDetected && trackingEnabled ? (x <= 3 ? 'bg-primary' : 'bg-primary/30') : 'bg-destructive animate-pulse'}`} />
+                                        ))}
+                                    </div>
+                                    <span className={`text-[10px] font-black uppercase ${isFaceDetected && trackingEnabled ? 'text-primary' : 'text-destructive'}`}>
+                                        {isFaceDetected && trackingEnabled ? 'OPTIMIZED' : 'INTERFERENCE'}
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             )}
+
+            <Dialog open={focusLost} onOpenChange={setFocusLost}>
+                <DialogContent className="glass-card border-destructive/30 sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="text-2xl font-black italic flex items-center gap-3 text-destructive">
+                            <ShieldAlert className="w-8 h-8" /> REGAIN FOCUS
+                        </DialogTitle>
+                        <DialogDescription className="text-muted-foreground font-medium pt-2">
+                            You have to focus on your studies! Your AI biometric signal has been lost. Re-align with the camera to continue your learning journey.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-6 flex flex-col items-center justify-center space-y-4">
+                        <div className="w-20 h-20 rounded-full bg-destructive/10 flex items-center justify-center border border-destructive/20 animate-pulse">
+                            <Camera className="w-10 h-10 text-destructive" />
+                        </div>
+                        <p className="text-xs font-bold uppercase tracking-widest text-destructive/80">Biometric Scan Failed</p>
+                    </div>
+                    <DialogFooter className="sm:justify-center">
+                        <Button
+                            className="w-full gradient-primary h-12 font-black uppercase tracking-widest"
+                            onClick={() => {
+                                setFocusLost(false);
+                                setMissingFrames(0);
+                                setIsFaceDetected(true);
+                                setRunning(true);
+                            }}
+                        >
+                            <Play className="w-4 h-4 mr-2 fill-current" /> Resume Neural Lock
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

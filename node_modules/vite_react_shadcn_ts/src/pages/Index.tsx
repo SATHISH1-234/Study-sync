@@ -393,6 +393,7 @@ export default function Index() {
           <div>
             <h5 className="font-black text-xs uppercase tracking-[0.2em] text-foreground mb-6">Connect</h5>
             <ul className="space-y-4 text-sm font-bold text-muted-foreground">
+              <li><Link to="/login?role=admin" className="hover:text-primary transition-colors flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5" /> Admin Portal</Link></li>
               <li><a href="#" className="hover:text-primary transition-colors">Twitter</a></li>
               <li><a href="#" className="hover:text-primary transition-colors">Discord</a></li>
               <li><a href="#" className="hover:text-primary transition-colors">LinkedIn</a></li>
@@ -406,8 +407,8 @@ export default function Index() {
             © 2026 SIP WEB. BUILT FOR EXCELLENCE.
           </p>
           <div className="flex items-center gap-8 text-[11px] font-black uppercase tracking-widest text-muted-foreground/60">
-            <a href="#" className="hover:text-foreground italic">Privacy Policy</a>
-            <a href="#" className="hover:text-foreground italic">Terms of Service</a>
+            <Link to="/login" className="hover:text-foreground italic">Privacy Policy</Link>
+            <Link to="/login" className="hover:text-foreground italic">Terms of Service</Link>
           </div>
         </div>
       </footer>

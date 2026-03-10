@@ -34,10 +34,19 @@ export default function ChatBot() {
         setIsLoading(true);
 
         try {
-            const res = await api.post("/ai/chat", { message: userMsg });
+            // Format history for Gemini API
+            const history = messages.map(msg => ({
+                role: msg.role === "ai" ? "model" : "user",
+                parts: [{ text: msg.content }]
+            }));
+
+            const res = await api.post("/ai/chat", {
+                message: userMsg,
+                history: history
+            });
             setMessages(prev => [...prev, { role: "ai", content: res.data.data }]);
         } catch (err) {
-            setMessages(prev => [...prev, { role: "ai", content: "Sorry, I'm having trouble connecting to the network. Please try again later." }]);
+            setMessages(prev => [...prev, { role: "ai", content: "Neural Disruption: Unable to sync with the matrix. Please attempt reconnection." }]);
         } finally {
             setIsLoading(false);
         }
@@ -76,8 +85,8 @@ export default function ChatBot() {
                             {messages.map((msg, i) => (
                                 <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                                     <div className={`max-w-[85%] p-3 rounded-2xl text-xs leading-relaxed ${msg.role === "user"
-                                            ? "bg-primary text-primary-foreground shadow-md rounded-tr-none"
-                                            : "bg-white border border-border/50 text-foreground shadow-sm rounded-tl-none"
+                                        ? "bg-primary text-primary-foreground shadow-md rounded-tr-none"
+                                        : "bg-white border border-border/50 text-foreground shadow-sm rounded-tl-none"
                                         }`}>
                                         {msg.content}
                                     </div>
