@@ -12,6 +12,15 @@ import { useAuth } from "@/context/AuthContext";
 import NotificationBell from "./NotificationBell";
 import ChatBot from "./ChatBot";
 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
 interface NavItem {
   label: string;
   path: string;
@@ -29,7 +38,7 @@ export default function DashboardLayout({ children, navItems, role, title }: Das
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const location = useLocation();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
@@ -135,9 +144,33 @@ export default function DashboardLayout({ children, navItems, role, title }: Das
               <Input placeholder="Search..." className="w-48 pl-9 h-9 bg-secondary/50" />
             </div>
             <NotificationBell />
-            <div className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center">
-              <User className="w-4 h-4 text-primary-foreground" />
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0 flex items-center justify-center hover:bg-transparent">
+                  <div className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center shadow-lg transition-transform hover:scale-110">
+                    <User className="w-4 h-4 text-primary-foreground" />
+                  </div>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56 glass-card border border-border/50 shadow-2xl rounded-2xl p-2 mt-2" align="end" sideOffset={8}>
+                <DropdownMenuLabel className="p-2">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-black italic tracking-tight">{user?.name}</p>
+                    <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest truncate">
+                      {user?.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-border/40" />
+                <DropdownMenuItem 
+                  onClick={logout} 
+                  className="p-2 rounded-xl text-destructive hover:bg-destructive/10 focus:bg-destructive/10 focus:text-destructive cursor-pointer flex items-center gap-2 transition-colors font-bold uppercase tracking-widest text-[10px]"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>Logout</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </header>
 

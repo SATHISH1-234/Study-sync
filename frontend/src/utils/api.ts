@@ -8,7 +8,7 @@ const api = axios.create({
 // Add a request interceptor to include the token
 api.interceptors.request.use(
     (config) => {
-        const savedUser = localStorage.getItem('user');
+        const savedUser = sessionStorage.getItem('user');
         if (savedUser) {
             const { token } = JSON.parse(savedUser);
             if (token) {

@@ -67,7 +67,7 @@ export default function NotificationBell() {
                     )}
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80 p-0 glass-card border border-border/40 shadow-2xl">
+            <DropdownMenuContent align="end" className="w-[280px] sm:w-80 p-0 glass-card border border-border/40 shadow-2xl">
                 <div className="flex items-center justify-between p-4 border-b border-border/40">
                     <h3 className="font-bold text-sm">Notifications</h3>
                     {unreadCount > 0 && (

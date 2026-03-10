@@ -46,7 +46,7 @@ export default function ChatBot() {
             });
             setMessages(prev => [...prev, { role: "ai", content: res.data.data }]);
         } catch (err) {
-            setMessages(prev => [...prev, { role: "ai", content: "Neural Disruption: Unable to sync with the matrix. Please attempt reconnection." }]);
+            setMessages(prev => [...prev, { role: "ai", content: "I'm having trouble connecting right now. Please try again soon." }]);
         } finally {
             setIsLoading(false);
         }
@@ -60,7 +60,7 @@ export default function ChatBot() {
                         initial={{ opacity: 0, scale: 0.8, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.8, y: 20 }}
-                        className="mb-4 w-[350px] h-[500px] glass-card flex flex-col shadow-2xl border-primary/20 overflow-hidden"
+                        className="mb-4 w-[calc(100vw-3rem)] sm:w-[350px] h-[500px] max-h-[70vh] glass-card flex flex-col shadow-2xl border-primary/20 overflow-hidden"
                     >
                         {/* Header */}
                         <div className="p-4 gradient-primary flex items-center justify-between text-primary-foreground">

@@ -200,22 +200,7 @@ export default function Login() {
             </form>
 
             <div className="mt-8 text-center bg-secondary/20 p-4 rounded-2xl border border-border/40">
-              {isAdminView ? (
-                <div className="space-y-3">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Administrative Bypass</p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full border-primary/20 hover:bg-primary/5 text-primary text-[10px] uppercase font-bold"
-                    onClick={() => {
-                      setEmail("admin@sip.com");
-                      setPassword("adminpassword123");
-                    }}
-                  >
-                    Sync Admin Credentials
-                  </Button>
-                </div>
-              ) : isMentorView ? (
+              {isMentorView ? (
                 <div className="space-y-3">
                   <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Mentor Access Portal</p>
                   <Link to="/register" className="text-primary font-bold hover:underline block text-sm">Become a Mentor</Link>

@@ -125,12 +125,12 @@ export default function Index() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.2 }}
-              className="text-6xl md:text-8xl font-black tracking-tighter leading-[0.9] mb-8 text-foreground"
+              className="text-5xl md:text-8xl font-black tracking-tighter leading-[0.9] mb-8 text-foreground"
             >
               Elevate Your <br />
               <span className="gradient-text italic">Learning.</span> <br />
               Master Your <br />
-              <span className="text-primary italic underline decoration-accent/30 decoration-8 underline-offset-8">Future.</span>
+              <span className="text-primary italic underline decoration-accent/30 decoration-4 md:decoration-8 underline-offset-8">Future.</span>
             </motion.h1>
 
             <motion.p
@@ -381,23 +381,12 @@ export default function Index() {
           </div>
 
           <div>
-            <h5 className="font-black text-xs uppercase tracking-[0.2em] text-foreground mb-6">Platform</h5>
+            <h5 className="font-black text-xs uppercase tracking-[0.2em] text-foreground mb-6">Quick Portal</h5>
             <ul className="space-y-4 text-sm font-bold text-muted-foreground">
-              <li><a href="#" className="hover:text-primary transition-colors">Courses</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Mentorship</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Resources</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Communities</a></li>
-            </ul>
-          </div>
-
-          <div>
-            <h5 className="font-black text-xs uppercase tracking-[0.2em] text-foreground mb-6">Connect</h5>
-            <ul className="space-y-4 text-sm font-bold text-muted-foreground">
-              <li><Link to="/login?role=admin" className="hover:text-primary transition-colors flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5" /> Admin Portal</Link></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Twitter</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Discord</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">LinkedIn</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Help Center</a></li>
+              <li><Link to="/login?role=admin" className="hover:text-primary transition-colors flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5" /> Admin Access</Link></li>
+              <li><Link to="/login" className="hover:text-primary transition-colors">Student Login</Link></li>
+              <li><Link to="/register" className="hover:text-primary transition-colors">Join Community</Link></li>
+              <li><a href="#features" className="hover:text-primary transition-colors">Features List</a></li>
             </ul>
           </div>
         </div>

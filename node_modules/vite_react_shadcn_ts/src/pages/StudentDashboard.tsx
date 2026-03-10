@@ -120,9 +120,9 @@ function DashboardHome() {
         <h2 className="text-2xl font-bold text-foreground">Welcome back, {user?.name}! 👋</h2>
         <Alert className="max-w-md bg-primary/5 border-primary/20 backdrop-blur-sm animate-pulse">
           <Brain className="h-4 w-4 text-primary" />
-          <AlertTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Neural Lock-in Pulse</AlertTitle>
+          <AlertTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Study Reminder</AlertTitle>
           <AlertDescription className="text-xs font-semibold text-muted-foreground italic">
-            "You have to focus things to study!" – Your AI guide recommends a 25min session.
+            "Don't forget to study today!" – Try a 25-minute focus session.
           </AlertDescription>
         </Alert>
       </div>
@@ -163,7 +163,7 @@ function DashboardHome() {
             <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
               <Brain className="w-4 h-4 text-primary" />
             </div>
-            AI Insight: Study Nodes
+            AI Study Insights
           </h3>
           <Button variant="ghost" size="sm" className="h-7 text-[10px] uppercase font-black tracking-widest text-primary hover:bg-primary/5" onClick={() => navigate("/student/reminders")}>
             Full Schedule
@@ -180,18 +180,18 @@ function DashboardHome() {
                   <div>
                     <p className="text-sm font-bold text-foreground leading-tight">{r.message}</p>
                     <p className="text-[10px] font-medium text-muted-foreground mt-0.5">
-                      {new Date(r.reminderTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {r.courseId?.title || "AI Priority"}
+                      {new Date(r.reminderTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {r.courseId?.title || "Study Alert"}
                     </p>
                   </div>
                 </div>
                 <Badge className="bg-primary/10 text-primary border-none text-[8px] font-black uppercase tracking-tighter">
-                  Syncing
+                  Reminder
                 </Badge>
               </div>
             ))
           ) : (
             <div className="text-xs text-muted-foreground p-8 bg-secondary/10 rounded-2xl text-center italic border border-dashed border-border/60">
-              Your AI timeline is currently clear.
+              No new reminders for today.
             </div>
           )}
         </div>

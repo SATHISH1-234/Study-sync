@@ -99,14 +99,14 @@ function DashboardHome() {
         <Dialog>
           <DialogTrigger asChild>
             <Button variant="outline" className="border-primary/50 text-primary hover:bg-primary/10">
-              <Megaphone className="w-4 h-4 mr-2" /> Broadcast Notify
+              <Megaphone className="w-4 h-4 mr-2" /> Send Announcement
             </Button>
           </DialogTrigger>
           <DialogContent className="glass-card shadow-2xl border-border/40">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Megaphone className="w-5 h-5 text-primary" />
-                Broadcast Notification
+                Send Important Announcement
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-4">

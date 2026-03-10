@@ -36,7 +36,7 @@ exports.getStudentGroups = async (req, res) => {
         const groups = await Group.find({ students: { $in: [req.params.studentId] } })
             .populate('students', 'name profileImage')
             .populate('mentorId', 'name profileImage')
-            .populate('courseId', 'title');
+            .populate('courseId', 'title studentsCount modulesCount mentorId');
         res.status(200).json({ success: true, count: groups.length, data: groups });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

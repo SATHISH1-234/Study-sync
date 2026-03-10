@@ -327,11 +327,11 @@ export default function FocusMode() {
             ) : null}
 
             {running && (
-                <div className="relative h-[70vh] w-full flex items-center justify-center bg-card/30 backdrop-blur-xl rounded-[40px] border border-border/40 overflow-hidden shadow-3xl">
+                <div className="relative h-[80vh] md:h-[70vh] w-full flex items-center justify-center bg-card/30 backdrop-blur-xl rounded-[30px] md:rounded-[40px] border border-border/40 overflow-hidden shadow-3xl">
                     <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-accent/5" />
 
                     {/* Corner Video Box - Top Right */}
-                    <div className="absolute top-10 right-10 w-60 aspect-video rounded-2xl overflow-hidden border-4 border-background/50 shadow-2xl bg-black z-50 ring-1 ring-primary/20 group transition-all hover:scale-105 duration-500">
+                    <div className="absolute top-4 right-4 md:top-10 md:right-10 w-32 md:w-60 aspect-video rounded-xl md:rounded-2xl overflow-hidden border-2 md:border-4 border-background/50 shadow-2xl bg-black z-50 ring-1 ring-primary/20 group transition-all hover:scale-105 duration-500">
                         {(() => {
                             const WebcamComp = Webcam as any;
                             return (
@@ -356,7 +356,7 @@ export default function FocusMode() {
 
 
                     {/* Main Content Area - Video + Floating Timer */}
-                    <div className="relative z-10 w-full h-full flex flex-col items-center justify-center p-10 gap-8">
+                    <div className="relative z-10 w-full h-full flex flex-col items-center justify-center p-4 md:p-10 gap-4 md:gap-8">
                         {videoUrl ? (
                             <div className="w-full max-w-4xl aspect-video rounded-[32px] overflow-hidden border-4 border-white/5 shadow-2xl bg-black/40 backdrop-blur-md relative group">
                                 <iframe
@@ -406,10 +406,10 @@ export default function FocusMode() {
                                         </defs>
                                     </svg>
                                     <div className="text-center z-10">
-                                        <span className={`text-8xl font-black italic tabular-nums tracking-tighter transition-colors duration-500 ${isFaceDetected ? 'text-foreground' : 'text-destructive scale-110'}`}>
+                                        <span className="text-6xl md:text-8xl font-black italic tabular-nums tracking-tighter transition-colors duration-500 [font-variant-numeric:tabular-nums]">
                                             {String(mins).padStart(2, "0")}:{String(secs).padStart(2, "0")}
                                         </span>
-                                        <p className="text-xs font-black uppercase tracking-[0.4em] text-muted-foreground mt-4">Remaining Lock-in</p>
+                                        <p className="text-[10px] md:text-xs font-black uppercase tracking-[0.2em] md:tracking-[0.4em] text-muted-foreground mt-2 md:mt-4">Remaining Lock-in</p>
                                     </div>
                                 </motion.div>
                             </div>
@@ -445,18 +445,18 @@ export default function FocusMode() {
                     </div>
 
                     {/* Stats Bar */}
-                    <div className="absolute top-10 left-10 right-10 flex justify-between items-center z-10">
-                        <div className="flex items-center gap-4 bg-background/40 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/5">
-                            <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
-                                <BookOpen className="w-5 h-5 text-primary" />
+                    <div className="absolute top-4 left-4 right-4 md:top-10 md:left-10 md:right-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 z-10 pointer-events-none md:pointer-events-auto">
+                        <div className="flex items-center gap-3 md:gap-4 bg-background/40 backdrop-blur-md px-4 py-2 md:px-6 md:py-3 rounded-xl md:rounded-2xl border border-white/5 pointer-events-auto">
+                            <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-primary/20 flex items-center justify-center">
+                                <BookOpen className="w-4 h-4 md:w-5 md:h-5 text-primary" />
                             </div>
                             <div>
-                                <p className="text-[10px] font-black text-muted-foreground uppercase leading-none mb-1 tracking-tighter">Current Matrix</p>
-                                <p className="text-sm font-bold truncate max-w-[200px] italic">{modules.find(m => m._id === selectedModule)?.title}</p>
+                                <p className="text-[8px] md:text-[10px] font-black text-muted-foreground uppercase leading-none mb-1 tracking-tighter">Current Matrix</p>
+                                <p className="text-xs md:text-sm font-bold truncate max-w-[120px] md:max-w-[200px] italic">{modules.find(m => m._id === selectedModule)?.title}</p>
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-8">
+                        <div className="hidden md:flex items-center gap-8">
                             <div className="text-right">
                                 <p className="text-[10px] font-black text-muted-foreground uppercase leading-none mb-2 tracking-tighter">AI Monitoring</p>
                                 <Button

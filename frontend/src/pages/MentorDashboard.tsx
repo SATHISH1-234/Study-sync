@@ -90,26 +90,26 @@ function DashboardHome() {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-border/40 pb-6">
         <div>
-          <h2 className="text-3xl font-black text-foreground tracking-tight italic uppercase">Command <span className="text-primary">Center</span></h2>
-          <p className="text-muted-foreground font-medium mt-1">Systems online. Mentor {user?.name} session initialized.</p>
+          <h2 className="text-3xl font-black text-foreground tracking-tight italic uppercase">Mentor Dashboard</h2>
+          <p className="text-muted-foreground font-medium mt-1">Manage your courses, students, and groups.</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="h-10 border-primary/20 hover:bg-primary/5 text-primary text-[10px] font-black tracking-widest uppercase rounded-xl" onClick={() => navigate("/mentor/courses")}>View All Courses</Button>
-          <Button className="h-10 gradient-primary btn-glow px-6 text-[10px] font-black uppercase tracking-widest rounded-xl" onClick={() => navigate("/mentor/courses/create")}>+ Create Signal</Button>
+          <Button variant="outline" size="sm" className="h-10 border-primary/20 hover:bg-primary/5 text-primary text-[10px] font-black tracking-widest uppercase rounded-xl" onClick={() => navigate("/mentor/courses")}>View My Courses</Button>
+          <Button className="h-10 gradient-primary btn-glow px-6 text-[10px] font-black uppercase tracking-widest rounded-xl" onClick={() => navigate("/mentor/courses/create")}>+ Create New Course</Button>
         </div>
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
         <StatCard title="Active Courses" value={stats.courses} icon={BookOpen} />
         <StatCard title="Total Students" value={stats.students} icon={GraduationCap} color="accent" />
-        <StatCard title="Neural Groups" value={stats.groups} icon={Users} color="accent" />
+        <StatCard title="Study Groups" value={stats.groups} icon={Users} color="accent" />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-8">
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Neural Groups Matrix</h3>
-            <Button variant="link" size="sm" className="text-[10px] font-bold text-muted-foreground uppercase h-auto p-0" onClick={() => navigate("/mentor/groups")}>All Groups</Button>
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Your Study Groups</h3>
+            <Button variant="link" size="sm" className="text-[10px] font-bold text-muted-foreground uppercase h-auto p-0" onClick={() => navigate("/mentor/groups")}>Go to Groups</Button>
           </div>
           <div className="grid sm:grid-cols-2 gap-4">
             {groups.length > 0 ? (
@@ -170,8 +170,8 @@ function DashboardHome() {
 
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Knowledge Feed</h3>
-              <Button variant="link" size="sm" className="text-[10px] font-bold text-muted-foreground uppercase h-auto p-0" onClick={() => navigate("/mentor/resources")}>Repository</Button>
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Shared Resources</h3>
+              <Button variant="link" size="sm" className="text-[10px] font-bold text-muted-foreground uppercase h-auto p-0" onClick={() => navigate("/mentor/resources")}>View Library</Button>
             </div>
             <div className="space-y-3">
               {recentResources.map((res, i) => (
@@ -188,7 +188,7 @@ function DashboardHome() {
                   </Button>
                 </div>
               ))}
-              {recentResources.length === 0 && <p className="text-sm text-muted-foreground italic px-2">Knowledge repository empty. Start sharing nodes.</p>}
+              {recentResources.length === 0 && <p className="text-sm text-muted-foreground italic px-2">No resources shared yet. Start uploading files.</p>}
             </div>
           </div>
         </div>

@@ -1,25 +1,21 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import DashboardLayout from "@/components/DashboardLayout";
+import { 
+    ChevronLeft, Plus, Trash2, Video, BookOpen, 
+    LayoutDashboard, Users, GraduationCap, FolderOpen, 
+    BarChart3, Loader2 
+} from "lucide-react";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ChevronLeft, Plus, Trash2, Video, LayoutDashboard, BookOpen, Users, GraduationCap, FolderOpen, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
 import api from "@/utils/api";
-
-const navItems = [
-    { label: "Dashboard", path: "/mentor", icon: LayoutDashboard },
-    { label: "My Courses", path: "/mentor/courses", icon: BookOpen },
-    { label: "Messages", path: "/chat", icon: Users },
-    { label: "Students", path: "/mentor/students", icon: GraduationCap },
-    { label: "Resources", path: "/mentor/resources", icon: FolderOpen },
-    { label: "Performance", path: "/mentor/performance", icon: BarChart3 },
-];
 
 export default function CreateCourse() {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
+    const [titleError, setTitleError] = useState("");
     const [course, setCourse] = useState({
         title: "",
         description: "",
@@ -27,6 +23,29 @@ export default function CreateCourse() {
     const [modules, setModules] = useState([
         { title: "", description: "", videoEmbedLink: "", order: 1 }
     ]);
+
+    const checkTitleExists = async (title: string) => {
+        if (!title.trim() || title.length < 3) {
+            setTitleError("");
+            return;
+        }
+        try {
+            const res = await api.get(`/courses/check-title?title=${encodeURIComponent(title.trim())}`);
+            if (res.data.exists) {
+                setTitleError("A course with this exact title already exists in the system.");
+            } else {
+                setTitleError("");
+            }
+        } catch (err) {
+            console.error("Error checking title:", err);
+        }
+    };
+
+    const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newTitle = e.target.value;
+        setCourse({ ...course, title: newTitle });
+        checkTitleExists(newTitle);
+    };
 
     const addModule = () => {
         setModules([...modules, { title: "", description: "", videoEmbedLink: "", order: modules.length + 1 }]);
@@ -78,6 +97,9 @@ export default function CreateCourse() {
         if (!course.title || !course.description) {
             return toast.error("Please fill course details");
         }
+        if (titleError) {
+            return toast.error("Course title already exists. Please choose a unique title.");
+        }
 
         try {
             setLoading(true);
@@ -102,96 +124,119 @@ export default function CreateCourse() {
     };
 
     return (
-        <DashboardLayout navItems={navItems} role="mentor" title="Create New Course">
-            <div className="max-w-4xl mx-auto pb-20">
-                <div className="mb-6 flex items-center justify-between">
-                    <Button variant="ghost" size="sm" onClick={() => navigate("/mentor/courses")} className="text-muted-foreground hover:text-foreground">
-                        <ChevronLeft className="w-4 h-4 mr-1" /> Back to My Courses
-                    </Button>
-                </div>
-                <form onSubmit={handleSubmit} className="space-y-8">
-                    <div className="glass-card p-6 space-y-4">
-                        <h3 className="text-lg font-bold text-foreground">Course Information</h3>
+        <div className="max-w-4xl mx-auto pb-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="mb-6 flex items-center justify-between">
+                <Button variant="ghost" size="sm" onClick={() => navigate("/mentor/courses")} className="text-muted-foreground hover:text-foreground group">
+                    <ChevronLeft className="w-4 h-4 mr-1 group-hover:-translate-x-1 transition-transform" /> Back to My Courses
+                </Button>
+            </div>
+            <form onSubmit={handleSubmit} className="space-y-8">
+                <div className="glass-card p-8 space-y-6 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16" />
+                    <h3 className="text-xl font-black text-foreground italic uppercase flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
+                            <BookOpen className="w-4 h-4 text-white" />
+                        </div>
+                        Course Information
+                    </h3>
+                    <div className="space-y-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Course Title</label>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">Title</label>
                             <Input
                                 placeholder="e.g. Advanced React Architecture"
                                 value={course.title}
-                                onChange={(e) => setCourse({ ...course, title: e.target.value })}
-                                className="bg-secondary/30"
+                                onChange={handleTitleChange}
+                                className={`bg-secondary/20 h-12 rounded-xl focus:ring-1 ${titleError ? 'border-destructive focus:ring-destructive' : 'border-border/60 focus:ring-primary/30'}`}
                             />
+                            {titleError && <p className="text-[10px] text-destructive font-bold mt-1 ml-1 animate-pulse italic">{titleError}</p>}
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Description</label>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">Learning Directive</label>
                             <Textarea
-                                placeholder="Describe what students will learn..."
+                                placeholder="Describe what students will learn in this neural cluster..."
                                 value={course.description}
                                 onChange={(e) => setCourse({ ...course, description: e.target.value })}
-                                className="bg-secondary/30 min-h-[100px]"
+                                className="bg-secondary/20 min-h-[120px] rounded-xl border-border/60 focus:ring-1 focus:ring-primary/30 resize-none"
                             />
                         </div>
                     </div>
+                </div>
+
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between px-2">
+                        <h3 className="text-lg font-black text-foreground italic uppercase tracking-tight">Sequence Modules</h3>
+                        <Button type="button" variant="outline" size="sm" onClick={addModule} className="h-9 border-primary/20 text-primary hover:bg-primary/5 rounded-xl font-bold uppercase text-[10px] tracking-widest px-4">
+                            <Plus className="w-4 h-4 mr-2" /> Add Sequence
+                        </Button>
+                    </div>
 
                     <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-lg font-bold text-foreground">Course Modules</h3>
-                            <Button type="button" variant="outline" size="sm" onClick={addModule} className="border-primary/50 text-primary">
-                                <Plus className="w-4 h-4 mr-2" /> Add Module
-                            </Button>
-                        </div>
-
                         {modules.map((mod, index) => (
-                            <div key={index} className="glass-card p-6 space-y-4 relative group">
-                                <div className="flex justify-between items-start">
-                                    <span className="bg-primary/10 text-primary text-xs font-bold px-3 py-1 rounded-full">Module {index + 1}</span>
+                            <motion.div
+                                key={index}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: index * 0.1 }}
+                                className="glass-card p-6 space-y-6 relative group border-primary/5 hover:border-primary/20 transition-all"
+                            >
+                                <div className="flex justify-between items-center pb-2 border-b border-border/20">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center font-black text-primary text-xs italic">
+                                            {index + 1}
+                                        </div>
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">Neural Module {index + 1}</span>
+                                    </div>
                                     {modules.length > 1 && (
-                                        <Button type="button" variant="ghost" size="icon" onClick={() => removeModule(index)} className="text-destructive hover:bg-destructive/10">
+                                        <Button type="button" variant="ghost" size="icon" onClick={() => removeModule(index)} className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg">
                                             <Trash2 className="w-4 h-4" />
                                         </Button>
                                     )}
                                 </div>
-                                <div className="grid md:grid-cols-2 gap-4">
+                                <div className="grid md:grid-cols-2 gap-6">
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium">Module Title</label>
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Module Meta Title</label>
                                         <Input
                                             placeholder="e.g. Introduction to Hooks"
                                             value={mod.title}
                                             onChange={(e) => handleModuleChange(index, "title", e.target.value)}
-                                            className="bg-secondary/30"
+                                            className="bg-secondary/10 h-11 rounded-xl border-border/40 focus:ring-1 focus:ring-primary/20"
                                         />
                                     </div>
-                                    <label className="text-sm font-medium flex items-center gap-2"><Video className="w-4 h-4" /> Video Link</label>
-                                    <Input
-                                        placeholder="Paste YouTube link here..."
-                                        value={mod.videoEmbedLink}
-                                        onChange={(e) => handleModuleChange(index, "videoEmbedLink", e.target.value)}
-                                        className="bg-secondary/30"
-                                    />
-                                    <p className="text-[10px] text-muted-foreground mt-1 italic">
-                                        💡 Paste any YouTube link (e.g. watch?v=... or youtu.be/...) and we'll automatically convert it for you!
-                                    </p>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1 flex items-center gap-2">
+                                            <Video className="w-3.5 h-3.5" /> Video Stream Link
+                                        </label>
+                                        <Input
+                                            placeholder="Paste YouTube source..."
+                                            value={mod.videoEmbedLink}
+                                            onChange={(e) => handleModuleChange(index, "videoEmbedLink", e.target.value)}
+                                            className="bg-secondary/10 h-11 rounded-xl border-border/40 focus:ring-1 focus:ring-primary/20"
+                                        />
+                                    </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium">Module Description (Optional)</label>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Description (Optional Data)</label>
                                     <Input
-                                        placeholder="Briefly explain this module..."
+                                        placeholder="Briefly explain this neural node..."
                                         value={mod.description}
                                         onChange={(e) => handleModuleChange(index, "description", e.target.value)}
-                                        className="bg-secondary/30"
+                                        className="bg-secondary/10 h-11 rounded-xl border-border/40 focus:ring-1 focus:ring-primary/20"
                                     />
                                 </div>
-                            </div>
+                            </motion.div>
                         ))}
                     </div>
+                </div>
 
-                    <div className="flex justify-end gap-3 pt-4">
-                        <Button type="button" variant="ghost" onClick={() => navigate("/mentor/courses")} disabled={loading}>Cancel</Button>
-                        <Button type="submit" className="gradient-primary btn-glow px-10" disabled={loading}>
-                            {loading ? "Creating..." : "Launch Course"}
-                        </Button>
-                    </div>
-                </form>
-            </div>
-        </DashboardLayout>
+                <div className="flex justify-end gap-4 pt-6">
+                    <Button type="button" variant="ghost" onClick={() => navigate("/mentor/courses")} disabled={loading} className="font-bold uppercase tracking-widest text-[10px] rounded-xl h-12 px-8">Discard</Button>
+                    <Button type="submit" className="gradient-primary btn-glow px-12 h-12 font-black uppercase tracking-[0.2em] text-[10px] rounded-xl shadow-xl shadow-primary/20" disabled={loading || !!titleError}>
+                        {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
+                        {loading ? "Initializing..." : "Launch Course Cluster"}
+                    </Button>
+                </div>
+            </form>
+        </div>
     );
 }
+
